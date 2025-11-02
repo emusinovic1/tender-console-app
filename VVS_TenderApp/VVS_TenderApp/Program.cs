@@ -15,7 +15,6 @@ namespace VVS_TenderApp
         static PonudaService ponudaService = new PonudaService(db);
         static AuthService authService = new AuthService(db);
         static PretragaService pretragaService = new PretragaService(db);
-        //static AnalizaService analizaService = new AnalizaService(db); //za one kriterije?
 
 
         static Korisnik ulogovanKorisnik = null;

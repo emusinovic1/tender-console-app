@@ -150,13 +150,6 @@ namespace VVS_TenderApp.Services
                 .ToList();
         }
 
-        public List<Ponuda> DohvatiPonudeZaTender(int tenderId)
-        {
-            return _db.DohvatiPonudePoTenderu(tenderId)
-                .OrderBy(p => p.Iznos) //prvo najjeftinija
-                .ToList();
-        }
-
         public Ponuda DohvatiPonudu(int ponudaId)
         {
             var ponuda = _db.DohvatiPonudu(ponudaId);

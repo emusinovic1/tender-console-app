@@ -156,13 +156,6 @@ namespace VVS_TenderApp.Services
             }
 
             return rezultati;
-            /*if (string.IsNullOrWhiteSpace(kljucnaRijec))
-                return _db.DohvatiSveTendere();
-
-            return _db.DohvatiSveTendere()
-                .Where(t => t.Naziv.ToLower().Contains(kljucnaRijec.ToLower()) ||
-                            t.Opis.ToLower().Contains(kljucnaRijec.ToLower()))
-                .ToList();*/
         }
 
 

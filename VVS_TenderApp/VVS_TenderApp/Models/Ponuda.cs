@@ -15,7 +15,5 @@ namespace VVS_TenderApp.Models
 
         public DateTime DatumSlanja { get; set; }
         public StatusPonude Status {  get; set; }
-
-        //public StatusPonude Status { get; set; }
     }
 }
