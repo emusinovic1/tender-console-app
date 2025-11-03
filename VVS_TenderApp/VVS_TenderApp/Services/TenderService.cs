@@ -17,7 +17,7 @@ namespace VVS_TenderApp.Services
             _db = db;
         }
 
-        public void ValidirajIKreirajTender(int firmaId, string naziv, string opis, DateTime rokZaPrijavu, decimal procijenjenaVrijednost)
+        public void ValidirajIKreirajTender(int firmaId, string naziv, string opis, DateTime rokZaPrijavu, decimal procijenjenaVrijednost, List<Kriterij> kriteriji)
         {
             var firma = _db.DohvatiFirmu(firmaId);
 
@@ -63,6 +63,11 @@ namespace VVS_TenderApp.Services
             if (postojeciTenderi.Any(t => t.Naziv.ToLower() == naziv.ToLower() &&
                                           t.Status == StatusTendera.Otvoren))
                 throw new Exception("Već imate aktivan tender sa istim nazivom");
+
+            decimal ukupno = kriteriji.Sum(k => k.Tezina);
+
+            if (Math.Abs(ukupno - 1.0m) > 0.0001m)
+                throw new Exception("Zbir težina za kriterije mora biti 1,0!");
 
             //kreira se tender ako je sve ok proslo
             var tender = new Tender
