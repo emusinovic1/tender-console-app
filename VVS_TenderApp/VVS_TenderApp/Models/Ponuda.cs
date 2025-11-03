@@ -12,6 +12,8 @@ namespace VVS_TenderApp.Models
         public int TenderId { get; set; }
         public int FirmaId { get; set; }
         public decimal Iznos { get; set; }
+        public int RokIsporukeDana { get; set; }
+        public int GarancijaMjeseci { get; set; }
 
         public DateTime DatumSlanja { get; set; }
         public StatusPonude Status {  get; set; }

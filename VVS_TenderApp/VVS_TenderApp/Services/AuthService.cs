@@ -72,10 +72,13 @@ namespace VVS_TenderApp.Services
             if (string.IsNullOrWhiteSpace(imeKorisnika))
                 throw new ArgumentException("Ime korisnika je obavezno");
 
+            if(!imeKorisnika.All(char.IsAsciiLetter) && imeKorisnika.Count(c => c == '-') != 1)
+                throw new Exception("Nevažeći format imena korisnika");
+
             if (_db.DohvatiKorisnikaPoEmailu(emailKorisnika) != null)
                 throw new Exception("Korisnik sa ovim emailom već postoji");
 
-            if (!emailKorisnika.Contains("@") || !emailKorisnika.Contains("."))
+            if(!ValidanEmailFormat(emailKorisnika))
                 throw new ArgumentException("Nevažeći format email adrese korisnika");
 
             if (string.IsNullOrWhiteSpace(lozinka) || lozinka.Length < 6)
@@ -143,22 +146,26 @@ namespace VVS_TenderApp.Services
             if (string.IsNullOrWhiteSpace(email))
                 return false;
 
-            if (!email.Contains("@"))
+            if (email.Length < 5 || email.Length > 254)
                 return false;
 
-            if (!email.Contains("."))
+            if (!email.Contains("@") || !email.Contains("."))
                 return false;
 
             int atIndex = email.IndexOf('@');
-            if (atIndex == 0)
+            if (atIndex == 0 || atIndex != email.LastIndexOf('@'))
                 return false;
 
             int dotIndex = email.LastIndexOf('.');
-            if (dotIndex <= atIndex + 1)
+            if (dotIndex <= atIndex + 1 || dotIndex == email.Length - 1)
                 return false;
 
-            if (dotIndex == email.Length - 1)
-                return false;
+            char[] nevalidni = { ' ', ',', ';', ':', '[', ']', '(', ')', '<', '>' };
+            for (int i = 0; i < nevalidni.Length; i++)
+            {
+                if (email.Contains(nevalidni[i]))
+                    return false;
+            }
 
             return true;
         }

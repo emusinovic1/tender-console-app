@@ -10,7 +10,7 @@ namespace VVS_TenderApp.Services
     internal interface ITenderService
     {
         public void ValidirajIKreirajTender(int firmaId, string naziv, string opis, DateTime rokZaPrijavu,
-            decimal procijenjenaVrijednost);
+            decimal procijenjenaVrijednost, List<Kriterij> kriteriji);
         public void AzurirajTender(int tenderId, int firmaId, string? noviNaziv,
                                    string? noviOpis, DateTime? noviRok, decimal? novaVrijednost);
         public void ZatvoriTender(int tenderId, int firmaId);

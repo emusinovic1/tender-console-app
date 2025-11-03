@@ -17,5 +17,7 @@ namespace VVS_TenderApp.Models
         public decimal ProcijenjenaVrijednost { get; set; }
         public StatusTendera Status { get; set; }
 
+        public List<Kriterij> Kriteriji { get; set; } = new List<Kriterij>();
+
     }
 }

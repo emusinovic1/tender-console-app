@@ -26,9 +26,17 @@ namespace VVS_TenderApp.Data
             Korisnici = new List<Korisnik>();
             Ponude = new List<Ponuda>();
             KreirajAdmina();
+            // vjerovatno mozemo bez ove linije
+            // svuda gdje se kreira se i inkrementira
             if (Tenderi.Any())
                 TenderId = Tenderi.Max(t => t.Id) + 1;
+
+            KreirajPrimjerneFirmeIKorisnike();
+            KreirajPrimjerneTendere();
+            KreirajPrimjernePonude();
         }
+
+        // INICIJALNI PODACI
 
         private void KreirajAdmina()
         {
@@ -44,6 +52,160 @@ namespace VVS_TenderApp.Data
             };
             Korisnici.Add(admin);
         }
+
+        private void KreirajPrimjerneFirmeIKorisnike()
+        {
+            var firma1 = new Firma
+            {
+                Id = FirmaId++,
+                Naziv = "TechNova d.o.o.",
+                PIB = "123456789",
+                Adresa = "Zmaja od Bosne 12, Sarajevo",
+                Email = "info@technova.ba",
+                Telefon = "+387 33 555 777"
+            };
+
+            var firma2 = new Firma
+            {
+                Id = FirmaId++,
+                Naziv = "BuildPro d.o.o.",
+                PIB = "987654321",
+                Adresa = "Kneza Miloša 45, Banja Luka",
+                Email = "kontakt@buildpro.ba",
+                Telefon = "+387 51 444 999"
+            };
+
+            var firma3 = new Firma
+            {
+                Id = FirmaId++,
+                Naziv = "Atlas d.o.o.",
+                PIB = "123123123",
+                Adresa = "Trg djece Sarajeva 1, Sarajevo",
+                Email = "info@atlas.ba",
+                Telefon = "+387 33 111 222"
+            };
+
+            Firme.AddRange(new[] { firma1, firma2, firma3 });
+
+            var korisnik1 = new Korisnik
+            {
+                Id = KorisnikId++,
+                Ime = "Marko",
+                Prezime = "Ivić",
+                Email = "marko@technova.ba",
+                LozinkaHash = GenerisiHash("marko123"),
+                Uloga = Uloga.Firma,
+                FirmaId = firma1.Id
+            };
+
+            var korisnik2 = new Korisnik
+            {
+                Id = KorisnikId++,
+                Ime = "Ivana",
+                Prezime = "Petrović",
+                Email = "ivana@buildpro.ba",
+                LozinkaHash = GenerisiHash("ivana123"),
+                Uloga = Uloga.Firma,
+                FirmaId = firma2.Id
+            };
+
+            var korisnik3 = new Korisnik
+            {
+                Id = KorisnikId++,
+                Ime = "Selma",
+                Prezime = "Begović",
+                Email = "selma@atlas.ba",
+                LozinkaHash = GenerisiHash("selma123"),
+                Uloga = Uloga.Firma,
+                FirmaId = firma3.Id
+            };
+
+            Korisnici.AddRange(new[] { korisnik1, korisnik2, korisnik3 });
+        }
+
+        private void KreirajPrimjerneTendere()
+        {
+            var tender1 = new Tender
+            {
+                Id = TenderId++,
+                FirmaId = Firme.First().Id,
+                Naziv = "Nabavka računarske opreme",
+                Opis = "Tender za nabavku laptopa i monitora za IT odjel.",
+                DatumObjave = DateTime.Now.AddDays(-5),
+                RokZaPrijavu = DateTime.Now.AddDays(10),
+                ProcijenjenaVrijednost = 25000m,
+                Status = StatusTendera.Otvoren,
+                Kriteriji = new List<Kriterij>
+                {
+                    new Kriterij {Tip = TipKriterija.Cijena, Tezina = 0.5M},
+                    new Kriterij {Tip = TipKriterija.RokIsporuke, Tezina = 0.3M},
+                    new Kriterij {Tip = TipKriterija.Garancija, Tezina = 0.2M}
+                }
+            };
+
+            var tender2 = new Tender
+            {
+                Id = TenderId++,
+                FirmaId = Firme.Last().Id,
+                Naziv = "Izgradnja poslovnog prostora",
+                Opis = "Tender za izvođenje građevinskih radova na novom objektu.",
+                DatumObjave = DateTime.Now.AddDays(-20),
+                RokZaPrijavu = DateTime.Now.AddDays(4),
+                ProcijenjenaVrijednost = 120000m,
+                Status = StatusTendera.Otvoren,
+                Kriteriji = new List<Kriterij>
+                {
+                    new Kriterij {Tip = TipKriterija.Cijena, Tezina = 0.6M},
+                    new Kriterij {Tip = TipKriterija.RokIsporuke, Tezina = 0.2M},
+                    new Kriterij {Tip = TipKriterija.Garancija, Tezina = 0.2M}
+                }
+            };
+
+            Tenderi.AddRange(new[] { tender1, tender2 });
+        }
+
+        private void KreirajPrimjernePonude()
+        {
+            var ponuda1 = new Ponuda
+            {
+                Id = PonudaId++,
+                TenderId = Tenderi[0].Id,
+                FirmaId = Firme[1].Id,
+                Iznos = 24000m,
+                DatumSlanja = DateTime.Now.AddDays(-2),
+                Status = StatusPonude.NaCekanju,
+                RokIsporukeDana = 5,
+                GarancijaMjeseci = 30,
+          
+            };
+
+            var ponuda1_1 = new Ponuda
+            {
+                Id = PonudaId++,
+                TenderId = Tenderi[0].Id,
+                FirmaId = Firme[2].Id,
+                Iznos = 25000m,
+                DatumSlanja = DateTime.Now.AddDays(-1),
+                Status = StatusPonude.NaCekanju,
+                RokIsporukeDana = 10,
+                GarancijaMjeseci = 24
+            };
+
+            var ponuda2 = new Ponuda
+            {
+                Id = PonudaId++,
+                TenderId = Tenderi[1].Id,
+                FirmaId = Firme[0].Id,
+                Iznos = 118000m,
+                DatumSlanja = DateTime.Now.AddDays(-3),
+                Status = StatusPonude.NaCekanju,
+                RokIsporukeDana = 3,
+                GarancijaMjeseci = 30
+            };
+
+            Ponude.AddRange(new[] { ponuda1, ponuda2, ponuda1_1 });
+        }
+
         private string GenerisiHash(string lozinka)
         {
             using (var sha256 = System.Security.Cryptography.SHA256.Create())

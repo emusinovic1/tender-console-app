@@ -15,6 +15,7 @@ namespace VVS_TenderApp
         static PonudaService ponudaService = new PonudaService(db);
         static AuthService authService = new AuthService(db);
         static PretragaService pretragaService = new PretragaService(db);
+        static RangiranjeService rangiranjeService = new RangiranjeService(db);
 
 
         static Korisnik ulogovanKorisnik = null;
@@ -407,7 +408,19 @@ namespace VVS_TenderApp
                 Console.Write("Vrijednost (KM): ");
                 decimal vrijednost = decimal.Parse(Console.ReadLine());
 
-                tenderService.ValidirajIKreirajTender(ulogovanKorisnik.FirmaId.Value, naziv, opis, rok, vrijednost);
+
+                var kriteriji = new List<Kriterij>();
+
+                Console.WriteLine("\nUnesite težine kriterija u postotcima (zbir treba biti 1,0):\n");
+
+                foreach (TipKriterija tip in Enum.GetValues(typeof(TipKriterija)))
+                {
+                    Console.Write(tip.ToReadableString() + " (0-1,0): ");
+                    decimal tezina = decimal.Parse(Console.ReadLine());
+                    kriteriji.Add(new Kriterij { Tip = tip, Tezina = tezina });
+                }
+
+                tenderService.ValidirajIKreirajTender(ulogovanKorisnik.FirmaId.Value, naziv, opis, rok, vrijednost, kriteriji);
 
                 Console.WriteLine("\nTender uspjesno kreiran!");
                 Console.ReadKey();
@@ -438,7 +451,8 @@ namespace VVS_TenderApp
 
                     foreach (var tender in tenderi)
                     {
-                        var ponude = db.DohvatiPonudePoTenderu(tender.Id);
+                        var ponude = rangiranjeService.RangirajPonude(tender.Id);
+
                         Console.WriteLine($"[ID: {tender.Id}] {tender.Naziv}");
                         Console.WriteLine($"Rok: {tender.RokZaPrijavu:dd.MM.yyyy}");
                         Console.WriteLine($"Vrijednost: {tender.ProcijenjenaVrijednost:N2} KM");
@@ -448,10 +462,10 @@ namespace VVS_TenderApp
                         if (ponude.Count > 0)
                         {
                             Console.WriteLine("  Ponude:");
-                            foreach (var ponuda in ponude.OrderBy(p => p.Iznos).Take(3))
+                            foreach (var ponuda in ponude.Take(3))
                             {
-                                var firmaP = db.DohvatiFirmu(ponuda.FirmaId);
-                                Console.WriteLine($"    • {firmaP.Naziv}: {ponuda.Iznos:N2} KM");
+                                var firmaP = db.DohvatiFirmu(ponuda.ponuda.FirmaId);
+                                Console.WriteLine($"    • {firmaP.Naziv}: {ponuda.ponuda.Iznos:N2} KM");
                             }
                         }
 
@@ -740,8 +754,9 @@ namespace VVS_TenderApp
                         Console.WriteLine($"[ID: {ponuda.Id}] Tender: {tender.Naziv}");
                         Console.WriteLine($"Naručilac: {narucioc.Naziv}");
                         Console.WriteLine($"Vaša ponuda: {ponuda.Iznos:N2} KM");
-                        Console.WriteLine($"Status ponude: {ponuda.Status}");
+                        Console.WriteLine($"Status ponude: {ponuda.Status.ToReadableString()}");
                         Console.WriteLine($"Datum slanja: {ponuda.DatumSlanja:dd.MM.yyyy}");
+                        Console.WriteLine($"Ocjena ponude (0-1): {rangiranjeService.DajOcjenuZaPonudu(ponuda):0.00}");
                         Console.WriteLine("─────────────────────────────────────────");
                     }
                 }
@@ -964,7 +979,18 @@ namespace VVS_TenderApp
                 Console.Write("Vrijednost (KM): ");
                 decimal vrijednost = decimal.Parse(Console.ReadLine());
 
-                tenderService.ValidirajIKreirajTender(firmaId, naziv, opis, rok, vrijednost);
+                var kriteriji = new List<Kriterij>();
+
+                Console.WriteLine("\nUnesite težine kriterija (zbir treba biti ili 1.0):\n");
+
+                foreach (TipKriterija tip in Enum.GetValues(typeof(TipKriterija)))
+                {
+                    Console.Write($"{tip} (0-1): ");
+                    decimal tezina = decimal.Parse(Console.ReadLine());
+                    kriteriji.Add(new Kriterij { Tip = tip, Tezina = tezina });
+                }
+
+                tenderService.ValidirajIKreirajTender(firmaId, naziv, opis, rok, vrijednost, kriteriji);
 
                 Console.WriteLine("\nTender kreiran!");
                 Console.ReadKey();
