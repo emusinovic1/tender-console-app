@@ -100,8 +100,7 @@ namespace VVS_TenderApp.Services
 
             var ponude = _db.DohvatiPonudePoTenderu(tenderId);
             if (ponude.Count() > 0)
-                throw new Exception("Ne možete ažurirati tender koji već ima ponude"); //OVO MI JE NEKAKO LOGIČNO AL AKO MISLITE 
-                                                                                       //DA TREBA MOCI OBRIŠITEE
+                throw new Exception("Ne možete ažurirati tender koji već ima ponude");
 
             //SVE KAO KAD SE KREIRALO, OVO IZNAD SAMO MANJE PROVJERA
             if (string.IsNullOrWhiteSpace(noviNaziv))
@@ -195,7 +194,6 @@ namespace VVS_TenderApp.Services
 
             var pobjednickaFirma = _db.DohvatiFirmu(ponuda.FirmaId);
             Console.WriteLine($"Tender '{tender.Naziv}' dodijeljen firmi {pobjednickaFirma.Naziv}");
-            //Console.WriteLine("Tender '{tender.Naziv}' dodijeljen ponuđaču (Ponuda ID: {ponudaId})");
         }
 
         public void OtkaziTender(int tenderId, int firmaId, string razlog)

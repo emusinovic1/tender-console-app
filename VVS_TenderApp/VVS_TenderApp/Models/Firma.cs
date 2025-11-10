@@ -14,6 +14,6 @@ namespace VVS_TenderApp.Models
         public string Adresa { get; set; }
         public string Email { get; set; }
         public string Telefon { get; set; }
-        //public string KontaktOsoba { get; set; } mozda i ne treba
+        
     }
 }
