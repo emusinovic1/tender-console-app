@@ -660,20 +660,64 @@ namespace VVS_TenderApp
                     return;
                 }
 
-                Console.WriteLine("\nPONUDE:\n");
-                foreach (var p in svePonude.OrderBy(p => p.Iznos))
+                // 3) Izbor načina dodjele
+                Console.WriteLine("\nOdaberite način dodjele:");
+                Console.WriteLine("1 - Pregled ponuda i ručna dodjela");
+                Console.WriteLine("2 - Automatska dodjela po rangiranju");
+                Console.Write("\nVaš odabir: ");
+
+                if (!int.TryParse(Console.ReadLine(), out int zeljenaOpcija) ||
+                    (zeljenaOpcija != 1 && zeljenaOpcija != 2))
                 {
-                    var firmaP = db.DohvatiFirmu(p.FirmaId);
-                    Console.WriteLine($"[{p.Id}] {firmaP.Naziv}: {p.Iznos:N2} KM");
+                    Console.WriteLine("Neispravan odabir opcije.");
+                    Console.ReadKey();
+                    return;
                 }
 
-                Console.Write("\nID pobjedničke ponude: ");
-                int ponudaId = int.Parse(Console.ReadLine());
+                if (zeljenaOpcija == 1)
+                {
+                    // --- RUČNA DODJELA ---
 
-                tenderService.DodijeliTender(tenderId, ponudaId, ulogovanKorisnik.FirmaId.Value);
-                Console.WriteLine("\nTender uspješno dodijeljen!");
-                Console.WriteLine("Pritisnite bilo koji taster...");
-                Console.ReadKey();
+                    Console.WriteLine("\nPONUDE (sortirane po cijeni):\n");
+                    foreach (var p in svePonude.OrderBy(p => p.Iznos))
+                    {
+                        var firmaP = db.DohvatiFirmu(p.FirmaId);
+                        string nazivFirme = firmaP != null ? firmaP.Naziv : $"Firma {p.FirmaId}";
+                        Console.WriteLine($"[{p.Id}] {nazivFirme}: {p.Iznos:N2} KM");
+                    }
+
+                    Console.Write("\nUnesite ID pobjedničke ponude: ");
+                    if (!int.TryParse(Console.ReadLine(), out int ponudaId))
+                    {
+                        Console.WriteLine("Neispravan unos ID-a ponude.");
+                        Console.ReadKey();
+                        return;
+                    }
+
+                    tenderService.DodijeliTender(tenderId, ponudaId, ulogovanKorisnik.FirmaId.Value);
+
+                    Console.WriteLine("\nTender uspješno dodijeljen (ručna dodjela)!");
+                    Console.WriteLine("Pritisnite bilo koji taster za povratak...");
+                    Console.ReadKey();
+                }
+                else if (zeljenaOpcija == 2)
+                {
+                    // --- AUTOMATSKA DODJELA PO RANGIRANJU ---
+
+                    var pobjednickaPonuda = tenderService.AutomatskiDodijeliTender(
+                        tenderId,
+                        ulogovanKorisnik.FirmaId.Value);
+
+                    var pobjednickaFirma = db.DohvatiFirmu(pobjednickaPonuda.FirmaId);
+
+                    Console.WriteLine("\nTender je automatski dodijeljen na osnovu rangiranja ponuda.");
+                    Console.WriteLine($"Pobjednička firma: {pobjednickaFirma?.Naziv ?? pobjednickaPonuda.FirmaId.ToString()}");
+                    Console.WriteLine($"Iznos ponude: {pobjednickaPonuda.Iznos:N2} KM");
+                    Console.WriteLine($"Status tendera: {tender.Status}");
+
+                    Console.WriteLine("\nPritisnite bilo koji taster za povratak...");
+                    Console.ReadKey();
+                }
             }
             catch (Exception ex)
             {
