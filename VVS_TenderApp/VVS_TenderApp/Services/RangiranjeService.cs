@@ -8,7 +8,7 @@ using VVS_TenderApp.Models;
 
 namespace VVS_TenderApp.Services
 {
-    internal class RangiranjeService
+    public class RangiranjeService
     {
             private readonly DbClass _db;
 

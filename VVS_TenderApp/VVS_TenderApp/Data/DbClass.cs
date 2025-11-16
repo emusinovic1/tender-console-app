@@ -214,22 +214,22 @@ namespace VVS_TenderApp.Data
                 return Convert.ToBase64String(bytes);
             }
         }
-        public void DodajKorisnika(Korisnik korisnik)
+        public virtual void DodajKorisnika(Korisnik korisnik)
         {
             korisnik.Id = KorisnikId++;
             Korisnici.Add(korisnik);
         }
 
-        public Korisnik DohvatiKorisnika(int id)
+        public virtual Korisnik DohvatiKorisnika(int id)
         {
             return Korisnici.FirstOrDefault(k => k.Id == id);
         }
 
-        public Korisnik DohvatiKorisnikaPoEmailu(string email)
+        public virtual Korisnik DohvatiKorisnikaPoEmailu(string email)
         {
             return Korisnici.FirstOrDefault(k => k.Email == email);
         }
-        public void AzurirajKorisnika(Korisnik korisnik)
+        public virtual void AzurirajKorisnika(Korisnik korisnik)
         {
             var stari = DohvatiKorisnika(korisnik.Id);
             if (stari != null)
@@ -238,53 +238,53 @@ namespace VVS_TenderApp.Data
                 Korisnici[index] = korisnik;
             }
         }
-        public List<Korisnik> DohvatiSveKorisnike()
+        public virtual List<Korisnik> DohvatiSveKorisnike()
         {
             return Korisnici;
         }
 
         //FIRME
-        public void DodajFirmu(Firma firma)
+        public virtual void DodajFirmu(Firma firma)
         {
             firma.Id = FirmaId++;
             Firme.Add(firma);
         }
-        public Firma DohvatiFirmu(int firmaId)
+        public virtual Firma DohvatiFirmu(int firmaId)
         {
             return Firme.FirstOrDefault(f => f.Id == firmaId);
         }
-        public List<Firma> DohvatiSveFirme()
+        public virtual List<Firma> DohvatiSveFirme()
         {
             return Firme;
         }
-        public bool PIBPostoji(string pib)
+        public virtual bool PIBPostoji(string pib)
         {
             return Firme.Any(f => f.PIB == pib);
         }
 
         //TENDERI
-        public void DodajTender(Tender tender)
+        public virtual void DodajTender(Tender tender)
         {
             tender.Id = TenderId++;
             Tenderi.Add(tender);
         }
-        public Tender DohvatiTender(int tenderId)
+        public virtual Tender DohvatiTender(int tenderId)
         {
             return Tenderi.FirstOrDefault(t => t.Id == tenderId);
         }
-        public List<Tender> DohvatiSveTendere()
+        public virtual List<Tender> DohvatiSveTendere()
         {
             return Tenderi;
         }
-        public List<Tender> DohvatiTenderePoFirmi(int firmaId)
+        public virtual List<Tender> DohvatiTenderePoFirmi(int firmaId)
         {
             return Tenderi.Where(t => t.FirmaId == firmaId).ToList();
         }
-        public List<Tender> DohvatiAktivneTendere()
+        public virtual List<Tender> DohvatiAktivneTendere()
         {
             return Tenderi.Where(t => t.Status == StatusTendera.Otvoren).ToList();
         }
-        public void AzurirajTender(Tender tender)
+        public virtual void AzurirajTender(Tender tender)
         {
             var stari = DohvatiTender(tender.Id);
             if(stari != null)
@@ -293,7 +293,7 @@ namespace VVS_TenderApp.Data
                 Tenderi[index] = tender;
             }
         }
-        public void ObrisiTender(int tenderId)
+        public virtual void ObrisiTender(int tenderId)
         {
             var tender = DohvatiTender(tenderId);
             if (tender != null)
@@ -302,28 +302,28 @@ namespace VVS_TenderApp.Data
             }
         }
         //PONUDE
-        public void DodajPonudu(Ponuda ponuda)
+        public virtual void DodajPonudu(Ponuda ponuda)
         {
             ponuda.Id = PonudaId++;
             Ponude.Add(ponuda);
         }
 
-        public Ponuda DohvatiPonudu(int id)
+        public virtual Ponuda DohvatiPonudu(int id)
         {
             return Ponude.FirstOrDefault(p => p.Id == id);
         }
 
-        public List<Ponuda> DohvatiPonudePoTenderu(int tenderId)
+        public virtual List<Ponuda> DohvatiPonudePoTenderu(int tenderId)
         {
             return Ponude.Where(p => p.TenderId == tenderId).ToList();
         }
 
-        public List<Ponuda> DohvatiPonudePoFirmi(int firmaId)
+        public virtual List<Ponuda> DohvatiPonudePoFirmi(int firmaId)
         {
             return Ponude.Where(p => p.FirmaId == firmaId).ToList();
         }
 
-        public void AzurirajPonudu(Ponuda ponuda)
+        public virtual void AzurirajPonudu(Ponuda ponuda)
         {
             var stara = DohvatiPonudu(ponuda.Id);
             if (stara != null)
@@ -333,7 +333,7 @@ namespace VVS_TenderApp.Data
             }
         }
 
-        public void ObrisiPonudu(int id)
+        public virtual void ObrisiPonudu(int id)
         {
             var ponuda = DohvatiPonudu(id);
             if (ponuda != null)
