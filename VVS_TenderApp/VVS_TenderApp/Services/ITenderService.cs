@@ -22,6 +22,8 @@ namespace VVS_TenderApp.Services
         public List<Tender> DohvatiTudjeTendere(int firmaId);
         public List<Tender> DohvatiSveTendere();
         public Tender DohvatiTender(int tenderId);
+
+        Ponuda AutomatskiDodijeliTender(int tenderId, int firmaId);
     }
 }
 

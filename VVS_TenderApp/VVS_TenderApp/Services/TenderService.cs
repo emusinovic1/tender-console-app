@@ -267,5 +267,57 @@ namespace VVS_TenderApp.Services
             return tender;
         }
 
+        public Ponuda AutomatskiDodijeliTender(int tenderId, int firmaId)
+        {
+            var tender = _db.DohvatiTender(tenderId);
+
+            if (tender == null)
+                throw new Exception("Tender ne postoji");
+
+            if (tender.FirmaId != firmaId)
+                throw new UnauthorizedAccessException("Ne možete dodijeliti tuđi tender");
+
+            // Automatska dodjela ima smisla tek kad je tender zatvoren
+            if (tender.Status != StatusTendera.Zatvoren)
+                throw new Exception("Tender mora biti zatvoren prije automatske dodjele");
+
+            // Dohvati sve ponude na tender
+            var ponude = _db.DohvatiPonudePoTenderu(tenderId).ToList();
+            if (!ponude.Any())
+                throw new Exception("Nema ponuda za ovaj tender");
+
+            // Iskoristi RangiranjeService da dobiješ rangirane ponude
+            var rangiranjeService = new RangiranjeService(_db);
+            var rangirane = rangiranjeService.RangirajPonude(tenderId);
+
+            if (!rangirane.Any())
+                throw new Exception("Nije moguće automatski dodijeliti tender bez rangiranih ponuda");
+
+            var pobjednickaPonuda = rangirane.First().ponuda;
+
+            // Ažuriraj status tendera
+            tender.Status = StatusTendera.Zavrsen;
+            _db.AzurirajTender(tender);
+
+            // Podesi status pobjedničke ponude
+            pobjednickaPonuda.Status = StatusPonude.Prihvacena;
+            _db.AzurirajPonudu(pobjednickaPonuda);
+
+            // Sve ostale ponude za ovaj tender postaju odbijene
+            var ostalePonude = ponude.Where(p => p.Id != pobjednickaPonuda.Id);
+            foreach (var p in ostalePonude)
+            {
+                p.Status = StatusPonude.Odbijena;
+                _db.AzurirajPonudu(p);
+            }
+
+            var pobjednickaFirma = _db.DohvatiFirmu(pobjednickaPonuda.FirmaId);
+            Console.WriteLine(
+                $"Tender '{tender.Naziv}' automatski dodijeljen firmi {pobjednickaFirma?.Naziv ?? pobjednickaPonuda.FirmaId.ToString()}");
+
+            return pobjednickaPonuda;
+        }
+
+
     }
 }
