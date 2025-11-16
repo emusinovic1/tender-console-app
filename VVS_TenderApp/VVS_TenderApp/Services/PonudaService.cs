@@ -8,7 +8,7 @@ using VVS_TenderApp.Models;
 
 namespace VVS_TenderApp.Services
 {
-    internal class PonudaService : IPonudaService
+    public class PonudaService : IPonudaService
     {
         private readonly DbClass _db;
         public PonudaService(DbClass db)
