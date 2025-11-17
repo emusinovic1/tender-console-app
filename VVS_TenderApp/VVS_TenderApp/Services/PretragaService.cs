@@ -8,7 +8,7 @@ using VVS_TenderApp.Models;
 
 namespace VVS_TenderApp.Services
 {
-    internal class PretragaService : IPretragaService
+    public class PretragaService : IPretragaService
     {
         private readonly DbClass _db;
 
