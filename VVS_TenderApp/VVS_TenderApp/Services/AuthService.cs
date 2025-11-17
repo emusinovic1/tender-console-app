@@ -8,7 +8,7 @@ using VVS_TenderApp.Models;
 
 namespace VVS_TenderApp.Services
 {
-    internal class AuthService : IAuthService
+    public class AuthService : IAuthService
     {
         private readonly DbClass _db;
 

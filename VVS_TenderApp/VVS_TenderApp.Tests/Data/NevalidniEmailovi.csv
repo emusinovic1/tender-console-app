@@ -1,0 +1,17 @@
+﻿Email
+test@
+@test.com
+test@example
+test@@example.com
+test @example.com
+test@example.
+test()@example.com
+test[]@example.com
+test<>@example.com
+test,user@example.com
+test;user@example.com
+test@domain@example.com
+@
+test
+example.com
+@domain.com
