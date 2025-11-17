@@ -14,6 +14,9 @@ namespace VVS_TenderApp.Models
         public string Adresa { get; set; }
         public string Email { get; set; }
         public string Telefon { get; set; }
-        
+        public List<int> Ocjene { get; set; } = new List<int>();
+        public double ProsjecnaOcjena =>
+            Ocjene.Count == 0 ? 0 : Ocjene.Average();
+
     }
 }

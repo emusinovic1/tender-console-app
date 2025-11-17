@@ -19,6 +19,52 @@ namespace VVS_TenderApp.Tests.Services
         private PonudaService _service;
 
         public TestContext TestContext { get; set; }
+        /*
+         ***************************************************************************************+
+         
+                                            TDD TESTOVI
+
+                                   FUNKCIONALNOST - Ocjenjivanje firmi
+         
+         
+         ****************************************************************************************
+         */
+        [TestMethod]
+        public void OcijeniFirmu_ValidnaOcjena_SnimiSe()
+        {
+            var firma = new Firma { Id = 2, Naziv = "TestFirma" };
+
+            _mockDb.Setup(d => d.DohvatiFirmu(2)).Returns(firma);
+
+            _service.OcijeniFirmu(2, 5);
+
+            _mockDb.Verify(d => d.SnimiOcjenu(2, 5), Times.Once);
+        }
+
+        [TestMethod]
+        public void OcijeniFirmu_FirmaNePostoji_BacaException()
+        {
+            _mockDb.Setup(d => d.DohvatiFirmu(2))
+                   .Returns((Firma)null);
+
+            Assert.ThrowsException<Exception>(() =>
+                _service.OcijeniFirmu(2, 5));
+        }
+
+
+        [TestMethod]
+        public void OcijeniFirmu_OcjenaNevalidna_BacaArgumentException()
+        {
+            var firma = new Firma { Id = 1 };
+            _mockDb.Setup(d => d.DohvatiFirmu(1)).Returns(firma);
+
+            Assert.ThrowsException<ArgumentException>(() =>
+                _service.OcijeniFirmu(1, 0));
+
+            Assert.ThrowsException<ArgumentException>(() =>
+                _service.OcijeniFirmu(1, 6));
+        }
+
 
         public static IEnumerable<object[]> NevalidniIznosi()
         {

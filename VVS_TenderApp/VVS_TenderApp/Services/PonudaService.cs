@@ -168,5 +168,18 @@ namespace VVS_TenderApp.Services
 
             return ponude;
         }
+
+        public void OcijeniFirmu(int firmaId, int ocjena)
+        {
+            if (ocjena < 1 || ocjena > 5)
+                throw new ArgumentException("Ocjena mora biti između 1 i 5.");
+
+            var firma = _db.DohvatiFirmu(firmaId);
+
+            if (firma == null)
+                throw new Exception("Firma ne postoji.");
+
+            _db.SnimiOcjenu(firmaId, ocjena);
+        }
     }
 }

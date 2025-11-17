@@ -80,19 +80,6 @@ namespace VVS_TenderApp.Tests.Services
             };
         }
 
-        private Firma CreateDefaultFirma(int id = 1)
-        {
-            return new Firma
-            {
-                Id = id,
-                Naziv = "Test Firma d.o.o.",
-                PIB = "123456789",
-                Adresa = "Test adresa 1",
-                Email = "firma@test.ba",
-                Telefon = "+387 33 111 222"
-            };
-        }
-
         //METODA PRIJAVA
 
         [TestMethod]

@@ -205,7 +205,14 @@ namespace VVS_TenderApp.Data
 
             Ponude.AddRange(new[] { ponuda1, ponuda2, ponuda1_1 });
         }
-
+        public virtual void SnimiOcjenu(int firmaId, int ocjena) //TDD
+        {
+            var firma = DohvatiFirmu(firmaId);
+            if (firma != null)
+            {
+                firma.Ocjene.Add(ocjena);
+            }
+        }
         private string GenerisiHash(string lozinka)
         {
             using (var sha256 = System.Security.Cryptography.SHA256.Create())
