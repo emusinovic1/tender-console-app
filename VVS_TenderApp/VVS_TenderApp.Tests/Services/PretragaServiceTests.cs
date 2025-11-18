@@ -282,36 +282,34 @@ namespace VVS_TenderApp.Tests.Services
 
 
         [TestMethod]
-        public void PretraziPoKljucnojRijeci_BubbleSortStillWorks_EvenThoughEveryoneJudges()
+        public void PretraziPoKljucnojRijeci_BubbleSort_StillFunctionsAsExpected()
         {
-            // Arrange: Da vidimo jel balon sortiranje još uvijek živo 🎈
+
+
             var t1 = CreateTender(1, naziv: "Najbolji Tender Ever", opis: "opis");
             var t2 = CreateTender(2, naziv: "Tender", opis: "opis opis opis"); // vise puta u opisu
             var t3 = CreateTender(3, naziv: "Obican Tender", opis: "samo opis");
 
             _mockDb.Setup(x => x.DohvatiSveTendere())
-                   .Returns(new List<Tender> { t3, t1, t2 }); // намјерно неsortovano
+                   .Returns(new List<Tender> { t3, t1, t2 }); 
 
-            // Act
+           
             var result = _service.PretraziPoKljucnojRijeci("tender");
 
-            // Assert
+           
             Assert.AreEqual(3, result.Count, "Trebalo bi naći sve tendere");
 
-            // Provjeri da li je bubble sort uradio svoje (score based ranking)
+            
             Assert.AreEqual(1, result[0].Id, "Tender sa 'Tender' na pocetku naziva treba biti prvi");
 
-            // Bonus: Bubble sort je O(n²) ali radi posao 💪
-            // "Premature optimization is the root of all evil" - Donald Knuth
+           
             Console.WriteLine("✅ Bubble sort: možda nije najbrži, ali je naš!");
         }
 
         [TestMethod]
         public void PretraziPoKljucnojRijeci_ScoringSystem_KonacnoTestiran()
         {
-            // Sad stvarno testiramo scoring logiku koja ti fali za coverage!
-
-            // Scenario 1: Exact match u nazivu = najviši score
+            
             var exactMatch = CreateTender(1, naziv: "asfalt", opis: "neki opis");
 
             // Scenario 2: Naziv starts with keyword = visok score  
@@ -334,13 +332,13 @@ namespace VVS_TenderApp.Tests.Services
             Assert.AreEqual(1, result[0].Id, "Exact match treba biti #1");
             Assert.AreEqual(2, result[1].Id, "Starts with treba biti #2");
 
-            // Ovo pokriva tvoj bubble sort, scoring system, i pojavljivanja u opisu!
+            
         }
 
         [TestMethod]
         public void PretraziPoKljucnojRijeci_MultipleOccurrences_ScoreBoost()
         {
-            // Test za "više pojavljivanja" logiku (line 113-122 u tvojoj klasi)
+           
             var t1 = CreateTender(1, naziv: "x", opis: "put put put put put"); // 5x = max 3 score
             var t2 = CreateTender(2, naziv: "x", opis: "put"); // 1x = 1 score
 
@@ -350,7 +348,7 @@ namespace VVS_TenderApp.Tests.Services
             var result = _service.PretraziPoKljucnojRijeci("put");
 
             Assert.AreEqual(1, result[0].Id, "Tender sa više pojavljivanja treba biti raniji");
-            // Ovo pokriva while loop za brojanje pojavljivanja + break na 3!
+  
         }
 
         [TestMethod]
@@ -425,7 +423,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_FilterByKljucnaRijec_Naziv()
         {
-            // Test za liniju 27-30: kljucna rijec u NAZIVU
+            // Test: kljucna rijec u NAZIVU
             var t1 = CreateTender(1, naziv: "Asfaltiranje ceste", opis: "neki opis");
             var t2 = CreateTender(2, naziv: "Nesto drugo", opis: "nesto");
 
@@ -440,7 +438,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_FilterByKljucnaRijec_Opis()
         {
-            // Test za liniju 27-30: kljucna rijec u OPISU
+            // Test: kljucna rijec u OPISU
             var t1 = CreateTender(1, naziv: "Projekat A", opis: "radovi na asfaltu");
             var t2 = CreateTender(2, naziv: "Projekat B", opis: "nesto sasvim drugo");
 
@@ -455,7 +453,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_FilterByKljucnaRijec_NijeUNazivuNitiOpisu()
         {
-            // Test za liniju 28-29: NI u nazivu NI u opisu = odgovara FALSE
+            // Test: NI u nazivu NI u opisu = odgovara FALSE
             var t1 = CreateTender(1, naziv: "Projekat", opis: "Opis");
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
@@ -497,7 +495,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_MinVrijednost_FailsBoundary()
         {
-            // Pokriva liniju 34: tender.ProcijenjenaVrijednost < minVrijednost
+            // tender.ProcijenjenaVrijednost < minVrijednost
             var t1 = CreateTender(1, procijenjena: 999m);
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
@@ -510,7 +508,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_MaxVrijednost_FailsBoundary()
         {
-            // Pokriva liniju 40: tender.ProcijenjenaVrijednost > maxVrijednost
+            // tender.ProcijenjenaVrijednost > maxVrijednost
             var t1 = CreateTender(1, procijenjena: 2001m);
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
@@ -523,7 +521,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_Status_Fails()
         {
-            // Pokriva liniju 46: tender.Status != status.Value
+            // tender.Status != status.Value
             var t1 = CreateTender(1, status: StatusTendera.Zatvoren);
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
@@ -536,7 +534,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_DatumOd_Fails()
         {
-            // Pokriva liniju 52: tender.DatumObjave < datumOd
+            // Pokriva tender.DatumObjave < datumOd
             var t1 = CreateTender(1, datumObjave: new DateTime(2024, 12, 31));
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
@@ -550,7 +548,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_DatumDo_Fails()
         {
-            // Pokriva liniju 58: tender.DatumObjave > datumDo
+            // Pokriva tender.DatumObjave > datumDo
             var t1 = CreateTender(1, datumObjave: new DateTime(2025, 2, 1));
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
@@ -564,7 +562,7 @@ namespace VVS_TenderApp.Tests.Services
         [TestMethod]
         public void NaprednaPretraga_FirmaId_Fails()
         {
-            // Pokriva liniju 64: tender.FirmaId != firmaId.Value
+            // Pokriva tender.FirmaId != firmaId.Value
             var t1 = CreateTender(1, firmaId: 5);
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
