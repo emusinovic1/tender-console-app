@@ -77,88 +77,127 @@ namespace VVS_TenderApp.Services
             return rezultat;
         }
 
+        // Refaktoring
+        private readonly struct ScoredTender
+        {
+            public Tender Tender { get; }
+            public int Score { get; }
+            public int OriginalIndex { get; }
+
+            public ScoredTender(Tender tender, int score, int originalIndex)
+            {
+                Tender = tender;
+                Score = score;
+                OriginalIndex = originalIndex;
+            }
+        }
+
+        // Data Level Refactoring: Replace magic numbers with named constants
+        private const int TitleContainsScore = 10;
+        private const int TitleStartsWithBonus = 5;
+        private const int TitleExactBonus = 10;
+        private const int DescriptionContainsScore = 3;
+        private const int MaxDescriptionHits = 3;
 
         public List<Tender> PretraziPoKljucnojRijeci(string kljucnaRijec)
         {
+            // Statement Level: Return as soon as you know the answer
             if (string.IsNullOrWhiteSpace(kljucnaRijec))
                 return _db.DohvatiSveTendere();
 
             var sviTenderi = _db.DohvatiSveTendere();
-            var rezultati = new List<Tender>();
-            var scorovi = new List<int>(); //po ovome kasnije ravnam
+            var scored = new List<ScoredTender>(capacity: sviTenderi.Count);
+
+            // Data Level: Introduce an intermediate variable
+            string keyword = kljucnaRijec.Trim();
 
             for (int i = 0; i < sviTenderi.Count; i++)
             {
                 var tender = sviTenderi[i];
-                int score = 0;
-                bool pronadjen = false;
 
-                string nazivLower = tender.Naziv.ToLower();
-                string opisLower = tender.Opis.ToLower();
-                string kljucnaLower = kljucnaRijec.ToLower();
+                // Data Level: Replace expression with a routine
+                int score = ComputeScore(tender, keyword);
 
-                //veci skor za naziv
-                if (nazivLower.Contains(kljucnaLower))
-                {
-                    pronadjen = true;
-                    score += 10;
-                    if (nazivLower.StartsWith(kljucnaLower))
-                        score += 5;
-
-                    //tacna rijec, ne dio je +
-                    if (nazivLower == kljucnaLower)
-                        score += 10;
-                }
-
-                //opis
-                if (opisLower.Contains(kljucnaLower))
-                {
-                    pronadjen = true;
-                    score += 3;
-
-                    //više pojavljivanj
-                    int pojavljivanja = 0;
-                    int index = 0;
-                    while ((index = opisLower.IndexOf(kljucnaLower, index)) != -1)
-                    {
-                        pojavljivanja++;
-                        index += kljucnaLower.Length;
-
-                        if (pojavljivanja > 3)
-                            break;
-                    }
-                    score += pojavljivanja;
-                }
-
-                if (pronadjen)
-                {
-                    rezultati.Add(tender);
-                    scorovi.Add(score);
-                }
+                if (score > 0)
+                    scored.Add(new ScoredTender(tender, score, i));
             }
 
-            //bubble sort
-            for (int i = 0; i < rezultati.Count - 1; i++)
-            {
-                for (int j = 0; j < rezultati.Count - i - 1; j++)
-                {
-                    if (scorovi[j] < scorovi[j + 1])
-                    {
-                        int tempScore = scorovi[j];
-                        scorovi[j] = scorovi[j + 1];
-                        scorovi[j + 1] = tempScore;
+            scored.Sort(CompareScored);
 
-                        var tempTender = rezultati[j];
-                        rezultati[j] = rezultati[j + 1];
-                        rezultati[j + 1] = tempTender;
-                    }
-                }
-            }
+            var rezultati = new List<Tender>(scored.Count);
+            for (int i = 0; i < scored.Count; i++)
+                rezultati.Add(scored[i].Tender);
 
             return rezultati;
         }
 
+        // Statement Level: Move complex boolean expression into a well-named function
+        private static int CompareScored(ScoredTender a, ScoredTender b)
+        {
+            int cmp = b.Score.CompareTo(a.Score); // desc
+            return (cmp != 0) ? cmp : a.OriginalIndex.CompareTo(b.OriginalIndex);
+        }
 
+        private int ComputeScore(Tender tender, string keyword)
+        {
+            if (tender == null) return 0;
+
+            int score = 0;
+
+            score += ScoreTitle(tender.Naziv, keyword);
+            score += ScoreDescription(tender.Opis, keyword);
+
+            return score;
+        }
+
+        private int ScoreTitle(string title, string keyword)
+        {
+            if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(keyword))
+                return 0;
+
+            if (!title.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                return 0;
+
+            int score = TitleContainsScore;
+
+            if (title.StartsWith(keyword, StringComparison.OrdinalIgnoreCase))
+                score += TitleStartsWithBonus;
+
+            if (string.Equals(title, keyword, StringComparison.OrdinalIgnoreCase))
+                score += TitleExactBonus;
+
+            return score;
+        }
+
+        private int ScoreDescription(string description, string keyword)
+        {
+            if (string.IsNullOrEmpty(description) || string.IsNullOrEmpty(keyword))
+                return 0;
+
+            if (!description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                return 0;
+
+            int score = DescriptionContainsScore;
+            score += CountOccurrencesUpTo(description, keyword, MaxDescriptionHits);
+
+            return score;
+        }
+
+        private static int CountOccurrencesUpTo(string text, string keyword, int maxHits)
+        {
+            int hits = 0;
+            int index = 0;
+
+            while ((index = text.IndexOf(keyword, index, StringComparison.OrdinalIgnoreCase)) != -1)
+            {
+                hits++;
+                if (hits > maxHits) break;
+
+                index += keyword.Length;
+            }
+
+            return hits;
+        }
 
         public List<Tender> PretraziPoVrijednosti(decimal minVrijednost, decimal maxVrijednost)
         {
