@@ -85,7 +85,9 @@ namespace VVS_TenderApp.Services
 
             var sviTenderi = _db.DohvatiSveTendere();
             var rezultati = new List<Tender>();
-            var scorovi = new List<int>(); //po ovome kasnije ravnam
+            var scorovi = new List<int>();
+
+            string kljucna = kljucnaRijec.Trim();
 
             for (int i = 0; i < sviTenderi.Count; i++)
             {
@@ -93,40 +95,37 @@ namespace VVS_TenderApp.Services
                 int score = 0;
                 bool pronadjen = false;
 
-                string nazivLower = tender.Naziv.ToLower();
-                string opisLower = tender.Opis.ToLower();
-                string kljucnaLower = kljucnaRijec.ToLower();
-
-                //veci skor za naziv
-                if (nazivLower.Contains(kljucnaLower))
+                if (!string.IsNullOrEmpty(tender.Naziv) &&
+                    tender.Naziv.Contains(kljucna, StringComparison.OrdinalIgnoreCase))
                 {
                     pronadjen = true;
                     score += 10;
-                    if (nazivLower.StartsWith(kljucnaLower))
+
+                    if (tender.Naziv.StartsWith(kljucna, StringComparison.OrdinalIgnoreCase))
                         score += 5;
 
-                    //tacna rijec, ne dio je +
-                    if (nazivLower == kljucnaLower)
+                    if (string.Equals(tender.Naziv, kljucna, StringComparison.OrdinalIgnoreCase))
                         score += 10;
                 }
 
-                //opis
-                if (opisLower.Contains(kljucnaLower))
+                if (!string.IsNullOrEmpty(tender.Opis) &&
+                    tender.Opis.Contains(kljucna, StringComparison.OrdinalIgnoreCase))
                 {
                     pronadjen = true;
                     score += 3;
 
-                    //više pojavljivanj
                     int pojavljivanja = 0;
                     int index = 0;
-                    while ((index = opisLower.IndexOf(kljucnaLower, index)) != -1)
+
+                    while ((index = tender.Opis.IndexOf(kljucna, index, StringComparison.OrdinalIgnoreCase)) != -1)
                     {
                         pojavljivanja++;
-                        index += kljucnaLower.Length;
+                        index += kljucna.Length;
 
                         if (pojavljivanja > 3)
                             break;
                     }
+
                     score += pojavljivanja;
                 }
 
@@ -137,7 +136,6 @@ namespace VVS_TenderApp.Services
                 }
             }
 
-            //bubble sort
             for (int i = 0; i < rezultati.Count - 1; i++)
             {
                 for (int j = 0; j < rezultati.Count - i - 1; j++)
