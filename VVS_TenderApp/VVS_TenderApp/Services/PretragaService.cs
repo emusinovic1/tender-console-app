@@ -77,12 +77,19 @@ namespace VVS_TenderApp.Services
             return rezultat;
         }
 
-        // Tuning 2
+        // Tuning 3
         private readonly struct ScoredTender
         {
             public Tender Tender { get; }
             public int Score { get; }
-            public ScoredTender(Tender tender, int score) { Tender = tender; Score = score; }
+            public int OriginalIndex { get; }
+
+            public ScoredTender(Tender tender, int score, int originalIndex)
+            {
+                Tender = tender;
+                Score = score;
+                OriginalIndex = originalIndex;
+            }
         }
 
         public List<Tender> PretraziPoKljucnojRijeci(string kljucnaRijec)
@@ -136,22 +143,15 @@ namespace VVS_TenderApp.Services
                 }
 
                 if (pronadjen)
-                    scored.Add(new ScoredTender(tender, score));
+                    scored.Add(new ScoredTender(tender, score, i));
             }
 
-            // bubble sort nad jednom listom
-            for (int i = 0; i < scored.Count - 1; i++)
+            scored.Sort((a, b) =>
             {
-                for (int j = 0; j < scored.Count - i - 1; j++)
-                {
-                    if (scored[j].Score < scored[j + 1].Score)
-                    {
-                        var tmp = scored[j];
-                        scored[j] = scored[j + 1];
-                        scored[j + 1] = tmp;
-                    }
-                }
-            }
+                int cmp = b.Score.CompareTo(a.Score); // desc
+                if (cmp != 0) return cmp;
+                return a.OriginalIndex.CompareTo(b.OriginalIndex); // stabilnost na jednakim score-ovima
+            });
 
             var rezultati = new List<Tender>(scored.Count);
             for (int i = 0; i < scored.Count; i++)
