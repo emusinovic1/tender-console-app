@@ -77,15 +77,21 @@ namespace VVS_TenderApp.Services
             return rezultat;
         }
 
-        // Tuning 1
+        // Tuning 2
+        private readonly struct ScoredTender
+        {
+            public Tender Tender { get; }
+            public int Score { get; }
+            public ScoredTender(Tender tender, int score) { Tender = tender; Score = score; }
+        }
+
         public List<Tender> PretraziPoKljucnojRijeci(string kljucnaRijec)
         {
             if (string.IsNullOrWhiteSpace(kljucnaRijec))
                 return _db.DohvatiSveTendere();
 
             var sviTenderi = _db.DohvatiSveTendere();
-            var rezultati = new List<Tender>();
-            var scorovi = new List<int>();
+            var scored = new List<ScoredTender>();
 
             string kljucna = kljucnaRijec.Trim();
 
@@ -130,33 +136,29 @@ namespace VVS_TenderApp.Services
                 }
 
                 if (pronadjen)
-                {
-                    rezultati.Add(tender);
-                    scorovi.Add(score);
-                }
+                    scored.Add(new ScoredTender(tender, score));
             }
 
-            for (int i = 0; i < rezultati.Count - 1; i++)
+            // bubble sort nad jednom listom
+            for (int i = 0; i < scored.Count - 1; i++)
             {
-                for (int j = 0; j < rezultati.Count - i - 1; j++)
+                for (int j = 0; j < scored.Count - i - 1; j++)
                 {
-                    if (scorovi[j] < scorovi[j + 1])
+                    if (scored[j].Score < scored[j + 1].Score)
                     {
-                        int tempScore = scorovi[j];
-                        scorovi[j] = scorovi[j + 1];
-                        scorovi[j + 1] = tempScore;
-
-                        var tempTender = rezultati[j];
-                        rezultati[j] = rezultati[j + 1];
-                        rezultati[j + 1] = tempTender;
+                        var tmp = scored[j];
+                        scored[j] = scored[j + 1];
+                        scored[j + 1] = tmp;
                     }
                 }
             }
 
+            var rezultati = new List<Tender>(scored.Count);
+            for (int i = 0; i < scored.Count; i++)
+                rezultati.Add(scored[i].Tender);
+
             return rezultati;
         }
-
-
 
         public List<Tender> PretraziPoVrijednosti(decimal minVrijednost, decimal maxVrijednost)
         {
