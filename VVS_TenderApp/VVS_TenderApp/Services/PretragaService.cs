@@ -77,7 +77,7 @@ namespace VVS_TenderApp.Services
             return rezultat;
         }
 
-
+        // Tuning 1
         public List<Tender> PretraziPoKljucnojRijeci(string kljucnaRijec)
         {
             if (string.IsNullOrWhiteSpace(kljucnaRijec))
