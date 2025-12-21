@@ -134,5 +134,6 @@ namespace VVS_TenderApp.Tests.Services
 
             Assert.AreEqual(0m, skor);
         }
+
     }
 }

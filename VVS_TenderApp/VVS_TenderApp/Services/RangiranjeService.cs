@@ -32,13 +32,39 @@ namespace VVS_TenderApp.Services
                 var minRok = ponude.Min(p => p.RokIsporukeDana);
                 var maxGarancija = ponude.Max(p => p.GarancijaMjeseci);
 
+               
+
                 foreach (var p in ponude)
                 {
+                //ovaj dio dodan naknadno da bi se povecala kompleksnost 
                     decimal ukupno = 0;
+                if (p == null || p.Iznos <= 0 || p.RokIsporukeDana < 0 || p.GarancijaMjeseci <= 0)
+                    continue;
 
-                    foreach (var k in tender.Kriteriji)
+                if (p.RokIsporukeDana < 0)  // +1
+                    continue;
+                foreach (var o in ponude)
+                {
+                    if (p != o) // Ne uspoređujte istu ponudu sa samom sobom
                     {
-                        if (k.Tip.Equals(TipKriterija.Cijena))
+                        if (p.Iznos < o.Iznos)
+                        {
+                            ukupno += 0.5m; // Dodajte bodove za povoljniju cijenu
+                        }
+                        else
+                        {
+                            ukupno -= 0.3m; // Oduzmite bodove za skuplju cijenu
+                        }
+                    }
+                }
+                //do ovdje
+
+                foreach (var k in tender.Kriteriji)
+
+                    {
+                    if (k == null || k.Tezina <= 0)  // +1 if, +1 ||
+                        continue;
+                    if (k.Tip.Equals(TipKriterija.Cijena))
                         {
                             ukupno += (minCijena / p.Iznos) * k.Tezina;
                         }
@@ -55,8 +81,24 @@ namespace VVS_TenderApp.Services
                     rezultat.Add((p, ukupno));
                 }
 
-                return rezultat.OrderByDescending(x => x.skor).ToList();
+            var sortiranRezultat = new List<(Ponuda ponuda, decimal skor)>(rezultat);
+
+            // Sortiraj KOPIJU
+            for (int i = 0; i < sortiranRezultat.Count - 1; i++)
+            {
+                for (int j = 0; j < sortiranRezultat.Count - i - 1; j++)
+                {
+                    if (sortiranRezultat[j].skor < sortiranRezultat[j + 1].skor)
+                    {
+                        var temp = sortiranRezultat[j];
+                        sortiranRezultat[j] = sortiranRezultat[j + 1];
+                        sortiranRezultat[j + 1] = temp;
+                    }
+                }
             }
+
+            return sortiranRezultat; // vrati sortiranu kopiju
+        }
 
             public decimal DajOcjenuZaPonudu(Ponuda p)
             {
