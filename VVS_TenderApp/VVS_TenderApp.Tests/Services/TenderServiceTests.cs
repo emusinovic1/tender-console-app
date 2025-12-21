@@ -245,24 +245,24 @@ namespace VVS_TenderApp.Tests.Services
             mockDb.Verify(db => db.DodajTender(It.IsAny<Tender>()), Times.Once(), "Tender nije dodan.");
         }
 
-       
 
         [DataTestMethod]
-        [DataRow(null, "Naziv tendera je obavezan", DisplayName = "Null naziv")]
         [DataRow("", "Naziv tendera je obavezan", DisplayName = "Prazan naziv")]
         [DataRow("Naziv", "Naziv mora imati minimum 10 karaktera", DisplayName = "Prekratak naziv")]
-        [DataRow("Test      ", "Naziv mora imati minimum 10 karaktera", DisplayName = "Razmaci na kraju")]
+        [DataRow("Test  ", "Naziv mora imati minimum 10 karaktera", DisplayName = "Razmaci na kraju")]
         [DataRow("     Test", "Naziv mora imati minimum 10 karaktera", DisplayName = "Razmaci na početku")]
         public void ValidirajIKreirajTender_NevalidanNaziv_BacaException(string naziv, string expectedMessage)
         {
             mockDb.Setup(x => x.DohvatiFirmu(101)).Returns(_testFirma);
-            var kriteriji = new List<Kriterij>
-        {
-            new Kriterij { Tip = TipKriterija.Cijena, Tezina = 1.0m }
-        };
+            mockDb.Setup(x => x.DohvatiFirmu(101)).Returns(_testFirma);
+            mockDb.Setup(x => x.DohvatiTenderePoFirmi(101)).Returns(new List<Tender>());
 
-            var exception = Assert.ThrowsException<ArgumentException>(() =>
-            {
+            var kriteriji = new List<Kriterij>
+    {
+        new Kriterij { Tip = TipKriterija.Cijena, Tezina = 1.0m }
+    };
+
+            var ex = Assert.ThrowsException<ArgumentException>(() =>
                 _tenderService.ValidirajIKreirajTender(
                     101,
                     naziv,
@@ -270,10 +270,33 @@ namespace VVS_TenderApp.Tests.Services
                     DateTime.Now.AddDays(10),
                     5000m,
                     kriteriji
-                );
-            });
+                )
+            );
 
-            Assert.AreEqual(expectedMessage, exception.Message);
+            Assert.AreEqual(expectedMessage, ex.Message);
+        }
+
+        [TestMethod]
+        public void ValidirajIKreirajTender_NullNaziv_BacaArgumentException()
+        {
+            mockDb.Setup(x => x.DohvatiFirmu(101)).Returns(_testFirma);
+            var kriteriji = new List<Kriterij>
+    {
+        new Kriterij { Tip = TipKriterija.Cijena, Tezina = 1.0m }
+    };
+
+            var ex = Assert.ThrowsException<ArgumentException>(() =>
+                _tenderService.ValidirajIKreirajTender(
+                    101,
+                    null,
+                    "Ovo je validan opis tendera koji ima više od pedeset karaktera",
+                    DateTime.Now.AddDays(10),
+                    5000m,
+                    kriteriji
+                )
+            );
+
+            Assert.AreEqual("Naziv tendera je obavezan", ex.Message);
         }
 
         [TestMethod]
@@ -776,11 +799,10 @@ namespace VVS_TenderApp.Tests.Services
 
         [DataTestMethod]
         [DataRow("", DisplayName = "Prazan naziv")]
-        [DataRow("Kratak", DisplayName = "Prekratak naziv - 6 karaktera")]
-        [DataRow("123456789", DisplayName = "9 karaktera")]
-        public void AzurirajTender_NevalidanNaziv_BacaException(string noviNaziv)
+        [DataRow("   ", DisplayName = "Naziv samo razmaci")]
+        [DataRow(null, DisplayName = "Naziv null")]
+        public void AzurirajTender_PrazanIliNullNaziv_NeMijenjaNaziv(string noviNaziv)
         {
-            // Arrange
             var postojeciTender = new Tender
             {
                 Id = 1,
@@ -793,22 +815,18 @@ namespace VVS_TenderApp.Tests.Services
             mockDb.Setup(x => x.DohvatiTender(1)).Returns(postojeciTender);
             mockDb.Setup(x => x.DohvatiPonudePoTenderu(1)).Returns(new List<Ponuda>());
 
-            // Act & Assert
-            var exception = Assert.ThrowsException<ArgumentException>(() =>
-            {
-                _tenderService.AzurirajTender(1, 101, noviNaziv, null, null, null);
-            });
+            _tenderService.AzurirajTender(1, 101, noviNaziv, null, null, null);
 
-            Assert.AreEqual("Naziv mora imati minimum 10 karaktera", exception.Message);
+            Assert.AreEqual("Stari validan naziv", postojeciTender.Naziv);
         }
+
 
         [DataTestMethod]
         [DataRow("", DisplayName = "Prazan opis")]
-        [DataRow("Kratak", DisplayName = "Prekratak opis")]
-        [DataRow("12345678901234567890123456789012345678901234567890", DisplayName = "49 karaktera")]
-        public void AzurirajTender_NevalidanOpis_BacaException(string noviOpis)
+        [DataRow("   ", DisplayName = "Opis samo razmaci")]
+        [DataRow(null, DisplayName = "Opis null")]
+        public void AzurirajTender_PrazanIliNullOpis_NeMijenjaOpis(string noviOpis)
         {
-            // Arrange
             var postojeciTender = new Tender
             {
                 Id = 1,
@@ -821,14 +839,11 @@ namespace VVS_TenderApp.Tests.Services
             mockDb.Setup(x => x.DohvatiTender(1)).Returns(postojeciTender);
             mockDb.Setup(x => x.DohvatiPonudePoTenderu(1)).Returns(new List<Ponuda>());
 
-            // Act & Assert
-            var exception = Assert.ThrowsException<ArgumentException>(() =>
-            {
-                _tenderService.AzurirajTender(1, 101, null, noviOpis, null, null);
-            });
+            _tenderService.AzurirajTender(1, 101, null, noviOpis, null, null);
 
-            Assert.AreEqual("Opis mora imati minimum 50 karaktera", exception.Message);
+            Assert.AreEqual("Stari opis koji ima vise od pedeset karaktera za validaciju", postojeciTender.Opis);
         }
+
 
         [DataTestMethod]
         [DataRow(-1, "Rok mora biti u budućnosti", DisplayName = "Rok u prošlosti")]

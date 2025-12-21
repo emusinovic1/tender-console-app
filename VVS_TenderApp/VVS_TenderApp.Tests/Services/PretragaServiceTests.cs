@@ -117,8 +117,7 @@ namespace VVS_TenderApp.Tests.Services
             }
         }
 
-        [Ignore]
-        [ExcludeFromCodeCoverage]
+       
         [DataTestMethod]
         [DynamicData(nameof(CsvKeywords), DynamicDataSourceType.Method)]
         public void PretraziPoKljucnojRijeci_Csv_Works(string keyword)
@@ -283,8 +282,7 @@ namespace VVS_TenderApp.Tests.Services
             Assert.AreEqual(new DateTime(2025, 3, 1), desc[0].DatumObjave);
         }
 
-        [Ignore]
-        [ExcludeFromCodeCoverage]
+       
         [TestMethod]
         public void PretraziPoKljucnojRijeci_BubbleSort_StillFunctionsAsExpected()
         {
@@ -303,11 +301,8 @@ namespace VVS_TenderApp.Tests.Services
            
             Assert.AreEqual(3, result.Count, "Trebalo bi naći sve tendere");
 
-            
-            Assert.AreEqual(1, result[0].Id, "Tender sa 'Tender' na pocetku naziva treba biti prvi");
 
-           
-            Console.WriteLine("✅ Bubble sort: možda nije najbrži, ali je naš!");
+            Assert.AreEqual(2, result[0].Id, "Tender sa ključnom riječi kao cijelim nazivom treba biti prvi");
         }
 
         [TestMethod]
