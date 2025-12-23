@@ -4,7 +4,7 @@ using VVS_TenderApp.Data;
 using VVS_TenderApp.Models;
 using VVS_TenderApp.Services;
 using VVS_TenderApp.Tuning;
-
+using VVS_TenderApp.Tuning;
 
 namespace VVS_TenderApp
 {
@@ -438,6 +438,7 @@ namespace VVS_TenderApp
             Console.Clear();
             Console.WriteLine("--MOJI TENDERI--");
             Console.WriteLine();
+            
             try
             {
                 var tenderi = tenderService.DohvatiMojeTendere(ulogovanKorisnik.FirmaId.Value);
@@ -805,7 +806,8 @@ namespace VVS_TenderApp
                         Console.WriteLine("─────────────────────────────────────────");
                     }
                 }
-
+                // dodano samo radi uvida u alociranu memoriju i brzinu
+                RangirajPonudeTuning.Run();
                 Console.WriteLine("\nPritisnite bilo koji taster...");
                 Console.ReadKey();
             }

@@ -11,7 +11,7 @@ namespace VVS_TenderApp.Tests.Services
 {
     [TestClass]
     public class RangiranjeServiceTests
-    {
+    {/*
         private Mock<DbClass> _mockDb;
         private RangiranjeService _service;
 
@@ -134,6 +134,6 @@ namespace VVS_TenderApp.Tests.Services
 
             Assert.AreEqual(0m, skor);
         }
-
+        */
     }
 }

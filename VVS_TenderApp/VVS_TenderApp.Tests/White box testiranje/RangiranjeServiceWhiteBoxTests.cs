@@ -22,7 +22,7 @@ public class RangiranjeServiceWhiteBoxTests
         _service = new RangiranjeService(_mockDb.Object);
     }
 
-    // TVOJE POSTOJE?E HELPER METODE - ostaju iste
+   
     private Tender CreateTenderSaKriterijima()
     {
         return new Tender
@@ -130,7 +130,7 @@ public class RangiranjeServiceWhiteBoxTests
     [TestMethod]
     public void Test2_NemaKriterija_RaniReturn()
     {
-        // Arrange
+       
         var tender = CreateTenderBezKriterija();
         var ponude = new List<Ponuda>
             {
@@ -144,7 +144,7 @@ public class RangiranjeServiceWhiteBoxTests
         // Assert
         Assert.AreEqual(0, rezultat.Count);
 
-        // Pokriva: Branch odluka 1 (TRUE - !tender.Kriteriji.Any())
+        
     }
 
     // TEST 3: Invalidne ponude - null, negativan iznos, negativan rok
@@ -155,7 +155,7 @@ public class RangiranjeServiceWhiteBoxTests
         var tender = CreateTenderSaKriterijem(TipKriterija.Cijena, 100m);
         var ponude = new List<Ponuda>
             {
-                
+                null,
                 Ponuda(2, 10, 0m, 30, 12),     // Iznos = 0
                 Ponuda(3, 10, -100m, 30, 12),  // Iznos < 0
                 Ponuda(4, 10, 1000m, -5, 12),  // RokIsporuke < 0
@@ -170,10 +170,7 @@ public class RangiranjeServiceWhiteBoxTests
         Assert.AreEqual(1, rezultat.Count);
         Assert.AreEqual(5, rezultat[0].ponuda.Id);
 
-        // Pokriva: 
-        // - Branch odluka 2 (TRUE - p==null, p.Iznos<=0)
-        // - Branch odluka 3 (TRUE - RokIsporukeDana<0)
-        // - Condition: C=T, D=T
+        
     }
 
     // TEST 4: Invalidni kriteriji - null, negativna težina
@@ -195,12 +192,10 @@ public class RangiranjeServiceWhiteBoxTests
         Assert.AreEqual(1, rezultat.Count);
         Assert.IsTrue(rezultat[0].skor > 0); // samo validni kriterij primijenjen
 
-        // Pokriva: 
-        // - Branch odluka 6 (TRUE - k==null, k.Tezina<=0)
-        // - Condition: E=T, F=T
+       
     }
 
-    // TEST 5: Usporedba ponuda - jeftinija vs skuplja
+    // TEST 5: Poredenje ponuda - jeftinija vs skuplja
     [TestMethod]
     public void Test5_UsporedBaPonuda_ObjeGrane()
     {
@@ -221,10 +216,7 @@ public class RangiranjeServiceWhiteBoxTests
         Assert.AreEqual(3, rezultat.Count);
         Assert.AreEqual(2, rezultat[0].ponuda.Id); // jeftinija prva
 
-        // Pokriva: 
-        // - Branch odluka 4 (TRUE - p!=o)
-        // - Branch odluka 5 (TRUE i FALSE - p.Iznos<o.Iznos)
-        // - Loop: unutrašnja foreach petlja
+       
     }
 
     // TEST 6: Kriterij CIJENA
@@ -248,9 +240,7 @@ public class RangiranjeServiceWhiteBoxTests
         Assert.AreEqual(1, rezultat[0].ponuda.Id); // jeftinija ima viši skor
         Assert.IsTrue(rezultat[0].skor > rezultat[1].skor);
 
-        // Pokriva: 
-        // - Branch odluka 7 (TRUE - TipKriterija.Cijena)
-        // - Data flow: minCijena korišten u kalkulaciji
+        
     }
 
     // TEST 7: Kriterij ROK ISPORUKE
@@ -274,9 +264,7 @@ public class RangiranjeServiceWhiteBoxTests
         Assert.AreEqual(1, rezultat[0].ponuda.Id); // kra?i rok je bolji
         Assert.IsTrue(rezultat[0].skor > rezultat[1].skor);
 
-        // Pokriva: 
-        // - Branch odluka 8 (TRUE - TipKriterija.RokIsporuke)
-        // - Data flow: minRok korišten u kalkulaciji
+        
     }
 
     // TEST 8: Kriterij GARANCIJA
@@ -300,9 +288,6 @@ public class RangiranjeServiceWhiteBoxTests
         Assert.AreEqual(1, rezultat[0].ponuda.Id); // duža garancija je bolja
         Assert.IsTrue(rezultat[0].skor > rezultat[1].skor);
 
-        // Pokriva: 
-        // - Branch odluka 9 (TRUE - TipKriterija.Garancija)
-        // - Data flow: maxGarancija korišten u kalkulaciji
     }
 
     // TEST 9: Svi kriteriji zajedno
@@ -326,10 +311,7 @@ public class RangiranjeServiceWhiteBoxTests
         Assert.AreEqual(3, rezultat.Count);
         Assert.AreEqual(1, rezultat[0].ponuda.Id); // najbolja kombinacija
 
-        // Pokriva: 
-        // - Sve tipove kriterija (odluke 7,8,9)
-        // - Loop: foreach kriteriji sa svim tipovima
-        // - Data flow: sve referentne vrijednosti koriste se
+        
     }
 
     // TEST 10: Sortiranje - SWAP se dešava
@@ -365,10 +347,7 @@ public class RangiranjeServiceWhiteBoxTests
             Assert.IsTrue(rezultat[i].skor >= rezultat[i + 1].skor);
         }
 
-        // Pokriva: 
-        // - Branch odluka 10 (TRUE - swap se dešava)
-        // - Loop: for i, for j (bubble sort)
-        // - Data flow: temp varijabla za swap
+        
     }
 
     // TEST 11: Sortiranje - BEZ SWAP (ve? sortirano)
@@ -379,30 +358,27 @@ public class RangiranjeServiceWhiteBoxTests
         var tender = CreateTenderSaKriterijem(TipKriterija.Cijena, 100m);
         var ponude = new List<Ponuda>
             {
-                Ponuda(1, 10, 1000m, 30, 12), // ve? najbolja
+                Ponuda(1, 10, 1000m, 30, 12), //  najbolja
                 Ponuda(2, 10, 2000m, 30, 12),
-                Ponuda(3, 10, 3000m, 30, 12)  // ve? najgora
+                Ponuda(3, 10, 3000m, 30, 12)  //  najgora
             };
         SetupMock(tender, ponude);
 
-        // Act
+        
         var rezultat = _service.RangirajPonude(10);
 
-        // Assert
         Assert.AreEqual(3, rezultat.Count);
-        Assert.AreEqual(1, rezultat[0].ponuda.Id); // redoslijed ostaje isti
+        Assert.AreEqual(1, rezultat[0].ponuda.Id); 
         Assert.AreEqual(2, rezultat[1].ponuda.Id);
         Assert.AreEqual(3, rezultat[2].ponuda.Id);
 
-        // Pokriva: 
-        // - Branch odluka 10 (FALSE - ne treba swap)
+        
     }
 
     // TEST 12: LOOP - 1 element (ne ulazi u sortiranje)
     [TestMethod]
     public void Test12_LoopPonude_JednaIteracija()
     {
-        // Arrange
         var tender = CreateTenderSaKriterijem(TipKriterija.Cijena, 100m);
         var ponude = new List<Ponuda>
             {
@@ -410,16 +386,46 @@ public class RangiranjeServiceWhiteBoxTests
             };
         SetupMock(tender, ponude);
 
-        // Act
+       
         var rezultat = _service.RangirajPonude(10);
 
-        // Assert
+       
         Assert.AreEqual(1, rezultat.Count);
         Assert.AreEqual(1, rezultat[0].ponuda.Id);
 
-        // Pokriva: 
-        // - Loop: foreach ponude - 1 iteracija
-        // - Loop: for i - 0 iteracija (ne ulazi jer Count-1=0)
+     
+    }
+    [TestMethod]
+    public void Test13_NullPonuda_Continue()
+    {
+        var tender = CreateTenderSaKriterijem(TipKriterija.Cijena, 100m);
+        var ponude = new List<Ponuda>
+    {
+        null,  
+        Ponuda(2, 10, 1000m, 30, 12)
+    };
+        SetupMock(tender, ponude);
+
+        var rezultat = _service.RangirajPonude(10);
+
+        Assert.AreEqual(1, rezultat.Count);
+        Assert.AreEqual(2, rezultat[0].ponuda.Id);
+    }
+    [TestMethod]
+    public void Test14_NegativnaGarancija_Continue()
+    {
+        var tender = CreateTenderSaKriterijem(TipKriterija.Garancija, 100m);
+        var ponude = new List<Ponuda>
+    {
+        Ponuda(1, 10, 1000m, 30, 0),   
+        Ponuda(2, 10, 1000m, 30, 12)
+    };
+        SetupMock(tender, ponude);
+
+        var rezultat = _service.RangirajPonude(10);
+
+        Assert.AreEqual(1, rezultat.Count);
+        Assert.AreEqual(2, rezultat[0].ponuda.Id);
     }
 }
 

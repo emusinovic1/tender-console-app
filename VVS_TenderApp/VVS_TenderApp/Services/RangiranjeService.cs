@@ -17,90 +17,176 @@ namespace VVS_TenderApp.Services
                 _db = db;
             }
 
-            public List<(Ponuda ponuda, decimal skor)> RangirajPonude(int tenderId)
+        public List<(Ponuda ponuda, decimal skor)> RangirajPonude(int tenderId)
+        {
+            var tender = _db.DohvatiTender(tenderId);
+            var ponude = _db.DohvatiPonudePoTenderu(tenderId);
+
+            if (!ImaPodatakaZaObradu(ponude, tender))
+                return new List<(Ponuda, decimal)>();
+
+            var validnePonude = FiltrirajValidnePonude(ponude);
+
+            if (!validnePonude.Any())
+                return new List<(Ponuda, decimal)>();
+
+            var referentneVrijednosti = IzracunajReferentneVrijednosti(validnePonude);
+            var rezultat = new List<(Ponuda, decimal skor)>();
+
+            foreach (var ponuda in ponude)
             {
-                var tender = _db.DohvatiTender(tenderId);
-                var ponude = _db.DohvatiPonudePoTenderu(tenderId);
-
-                if (!ponude.Any() || !tender.Kriteriji.Any())
-                    return new List<(Ponuda, decimal)>();
-
-                var rezultat = new List<(Ponuda, decimal skor)>();
-
-                // referentne vrijednosti za normalizaciju
-                var minCijena = ponude.Min(p => p.Iznos);
-                var minRok = ponude.Min(p => p.RokIsporukeDana);
-                var maxGarancija = ponude.Max(p => p.GarancijaMjeseci);
-
-               
-
-                foreach (var p in ponude)
-                {
-                //ovaj dio dodan naknadno da bi se povecala kompleksnost 
-                    decimal ukupno = 0;
-                if (p == null || p.Iznos <= 0 || p.RokIsporukeDana < 0 || p.GarancijaMjeseci <= 0)
+                if (!JeValidnaPonuda(ponuda))
                     continue;
 
-                if (p.RokIsporukeDana < 0)  // +1
-                    continue;
-                foreach (var o in ponude)
-                {
-                    if (p != o) // Ne uspoređujte istu ponudu sa samom sobom
-                    {
-                        if (p.Iznos < o.Iznos)
-                        {
-                            ukupno += 0.5m; // Dodajte bodove za povoljniju cijenu
-                        }
-                        else
-                        {
-                            ukupno -= 0.3m; // Oduzmite bodove za skuplju cijenu
-                        }
-                    }
-                }
-                //do ovdje
-
-                foreach (var k in tender.Kriteriji)
-
-                    {
-                    if (k == null || k.Tezina <= 0)  // +1 if, +1 ||
-                        continue;
-                    if (k.Tip.Equals(TipKriterija.Cijena))
-                        {
-                            ukupno += (minCijena / p.Iznos) * k.Tezina;
-                        }
-                        else if (k.Tip.Equals(TipKriterija.RokIsporuke))
-                        {
-                            ukupno += ((decimal)minRok / p.RokIsporukeDana) * k.Tezina;
-                        }
-                        else if (k.Tip.Equals(TipKriterija.Garancija))
-                        {
-                            ukupno += ((decimal)p.GarancijaMjeseci / maxGarancija) * k.Tezina;
-                        }
-                    }
-
-                    rezultat.Add((p, ukupno));
-                }
-
-            var sortiranRezultat = new List<(Ponuda ponuda, decimal skor)>(rezultat);
-
-            // Sortiraj KOPIJU
-            for (int i = 0; i < sortiranRezultat.Count - 1; i++)
-            {
-                for (int j = 0; j < sortiranRezultat.Count - i - 1; j++)
-                {
-                    if (sortiranRezultat[j].skor < sortiranRezultat[j + 1].skor)
-                    {
-                        var temp = sortiranRezultat[j];
-                        sortiranRezultat[j] = sortiranRezultat[j + 1];
-                        sortiranRezultat[j + 1] = temp;
-                    }
-                }
+                decimal ukupanSkor = IzracunajUkupanSkor(ponuda, ponude, tender, referentneVrijednosti);
+                rezultat.Add((ponuda, ukupanSkor));
             }
 
-            return sortiranRezultat; // vrati sortiranu kopiju
+            return SortirajPoSkoru(rezultat);
         }
 
-            public decimal DajOcjenuZaPonudu(Ponuda p)
+        private bool ImaPodatakaZaObradu(List<Ponuda> ponude, Tender tender)
+        {
+            return ponude.Any() && tender.Kriteriji.Any();
+        }
+
+        private List<Ponuda> FiltrirajValidnePonude(List<Ponuda> ponude)
+        {
+            return ponude
+                .Where(p => p != null
+                         && p.Iznos > 0
+                         && p.RokIsporukeDana >= 0
+                         && p.GarancijaMjeseci > 0)
+                .ToList();
+        }
+
+        private bool JeValidnaPonuda(Ponuda ponuda)
+        {
+            if (ponuda == null)
+                return false;
+
+            if (ponuda.Iznos <= 0 || ponuda.GarancijaMjeseci <= 0)
+                return false;
+
+            if (ponuda.RokIsporukeDana < 0)
+                return false;
+
+            return true;
+        }
+
+        private ReferentneVrijednosti IzracunajReferentneVrijednosti(List<Ponuda> validnePonude)
+        {
+            return new ReferentneVrijednosti
+            {
+                MinCijena = validnePonude.Min(p => p.Iznos),
+                MinRok = validnePonude.Min(p => p.RokIsporukeDana),
+                MaxGarancija = validnePonude.Max(p => p.GarancijaMjeseci)
+            };
+        }
+
+        private decimal IzracunajUkupanSkor(Ponuda ponuda, List<Ponuda> svePonude,
+                                            Tender tender, ReferentneVrijednosti referentne)
+        {
+            decimal skor = IzracunajKomparativniSkor(ponuda, svePonude);
+            skor += IzracunajSkorPoKriterijima(ponuda, tender, referentne);
+            return skor;
+        }
+
+        private decimal IzracunajKomparativniSkor(Ponuda ponuda, List<Ponuda> svePonude)
+        {
+            const decimal BONUS_ZA_POVOLJNIJU = 0.5m;
+            const decimal PENALIZACIJA_ZA_SKUPLJU = 0.3m;
+
+            decimal skor = 0;
+
+            foreach (var drugaPonuda in svePonude)
+            {
+                if (JeIstaPonuda(ponuda, drugaPonuda) || drugaPonuda == null)
+                    continue;
+
+                if (ponuda.Iznos < drugaPonuda.Iznos)
+                    skor += BONUS_ZA_POVOLJNIJU;
+                else
+                    skor -= PENALIZACIJA_ZA_SKUPLJU;
+            }
+
+            return skor;
+        }
+
+        private bool JeIstaPonuda(Ponuda ponuda1, Ponuda ponuda2)
+        {
+            return ponuda1 == ponuda2;
+        }
+
+        private decimal IzracunajSkorPoKriterijima(Ponuda ponuda, Tender tender,
+                                                   ReferentneVrijednosti referentne)
+        {
+            decimal skor = 0;
+
+            foreach (var kriterij in tender.Kriteriji)
+            {
+                if (!JeValidanKriterij(kriterij))
+                    continue;
+
+                skor += IzracunajSkorZaKriterij(ponuda, kriterij, referentne);
+            }
+
+            return skor;
+        }
+
+        private bool JeValidanKriterij(Kriterij kriterij)
+        {
+            return kriterij != null && kriterij.Tezina > 0;
+        }
+
+        private decimal IzracunajSkorZaKriterij(Ponuda ponuda, Kriterij kriterij,
+                                                ReferentneVrijednosti referentne)
+        {
+            if (kriterij.Tip.Equals(TipKriterija.Cijena))
+                return IzracunajSkorZaCijenu(ponuda, kriterij, referentne);
+
+            if (kriterij.Tip.Equals(TipKriterija.RokIsporuke))
+                return IzracunajSkorZaRok(ponuda, kriterij, referentne);
+
+            if (kriterij.Tip.Equals(TipKriterija.Garancija))
+                return IzracunajSkorZaGaranciju(ponuda, kriterij, referentne);
+
+            return 0;
+        }
+
+        private decimal IzracunajSkorZaCijenu(Ponuda ponuda, Kriterij kriterij,
+                                              ReferentneVrijednosti referentne)
+        {
+            return (referentne.MinCijena / ponuda.Iznos) * kriterij.Tezina;
+        }
+
+        private decimal IzracunajSkorZaRok(Ponuda ponuda, Kriterij kriterij,
+                                           ReferentneVrijednosti referentne)
+        {
+            return ((decimal)referentne.MinRok / ponuda.RokIsporukeDana) * kriterij.Tezina;
+        }
+
+        private decimal IzracunajSkorZaGaranciju(Ponuda ponuda, Kriterij kriterij,
+                                                 ReferentneVrijednosti referentne)
+        {
+            return ((decimal)ponuda.GarancijaMjeseci / referentne.MaxGarancija) * kriterij.Tezina;
+        }
+
+        private List<(Ponuda ponuda, decimal skor)> SortirajPoSkoru(
+            List<(Ponuda ponuda, decimal skor)> rezultat)
+        {
+            return rezultat.OrderByDescending(r => r.skor).ToList();
+        }
+
+        // Nova klasa za čuvanje referentnih vrijednosti
+        private class ReferentneVrijednosti
+        {
+            public decimal MinCijena { get; set; }
+            public int MinRok { get; set; }
+            public int MaxGarancija { get; set; }
+        }
+ 
+        public decimal DajOcjenuZaPonudu(Ponuda p)
             {
                 var rangirane = RangirajPonude(p.TenderId);
                 var mojaPonuda = rangirane.FirstOrDefault(pon => pon.ponuda.Id == p.Id);
