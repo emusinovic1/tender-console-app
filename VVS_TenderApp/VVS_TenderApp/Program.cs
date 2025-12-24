@@ -380,7 +380,7 @@ namespace VVS_TenderApp
                     break;
                 case "12":
                     Console.WriteLine("\nHvala što ste koristili sistem. Doviđenja!");
-                    Environment.Exit(0);break;
+                    Environment.Exit(0); break;
                 default:
                     Console.WriteLine("Nevazeca opcija!");
                     Console.ReadKey();
@@ -437,7 +437,7 @@ namespace VVS_TenderApp
             Console.Clear();
             Console.WriteLine("--MOJI TENDERI--");
             Console.WriteLine();
-            
+
             try
             {
                 var tenderi = tenderService.DohvatiMojeTendere(ulogovanKorisnik.FirmaId.Value);
@@ -633,7 +633,7 @@ namespace VVS_TenderApp
             try
             {
                 var tenderi = tenderService.DohvatiMojeTendere(ulogovanKorisnik.FirmaId.Value)
-                    .Where(t => t.Status == StatusTendera.Zatvoren) .ToList();
+                    .Where(t => t.Status == StatusTendera.Zatvoren).ToList();
 
                 if (tenderi.Count == 0)
                 {
@@ -763,7 +763,7 @@ namespace VVS_TenderApp
                     : decimal.Parse(iznosStr);
 
                 ponudaService.ValidirajIPosaljiPonudu(tenderId, ulogovanKorisnik.FirmaId.Value, iznos);
-                
+
                 Console.WriteLine("\nPonuda uspješno poslata!");
                 Console.WriteLine("Pritisnite bilo koji taster...");
                 Console.ReadKey();
@@ -851,8 +851,8 @@ namespace VVS_TenderApp
 
                 Console.Write("Novi iznos (KM): ");
                 string iznosStr = Console.ReadLine();
-                decimal iznos = string.IsNullOrWhiteSpace(iznosStr) 
-                    ? 0 :decimal.Parse(iznosStr);
+                decimal iznos = string.IsNullOrWhiteSpace(iznosStr)
+                    ? 0 : decimal.Parse(iznosStr);
 
                 ponudaService.AzurirajPonudu(id, ulogovanKorisnik.FirmaId.Value, iznos);
 
@@ -933,8 +933,8 @@ namespace VVS_TenderApp
             switch (Console.ReadLine())
             {
                 case "1": PregledTendera(); break;
-                case "2":AdminBrisanjeTendera(); break;
-                case "3":AdminRaspisivanjeTendera(); break;
+                case "2": AdminBrisanjeTendera(); break;
+                case "3": AdminRaspisivanjeTendera(); break;
                 case "0":
                     ulogovanKorisnik = null;
                     Console.WriteLine("\nUspješno ste se odjavili.");
@@ -1074,6 +1074,6 @@ namespace VVS_TenderApp
             Console.WriteLine();
             return lozinka;
         }
- 
+
     }
 }
