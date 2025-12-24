@@ -321,8 +321,7 @@ namespace VVS_TenderApp
                     minVrijednost,
                     maxVrijednost,
                     StatusTendera.Otvoren,
-                    rokOd,
-                    rokDo, null
+                    rokOd
                 );
 
                 PrikaziTendere(rezultati);
