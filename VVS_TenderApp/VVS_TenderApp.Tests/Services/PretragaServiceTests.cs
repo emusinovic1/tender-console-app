@@ -73,7 +73,7 @@ namespace VVS_TenderApp.Tests.Services
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1, t2, t3 });
 
             var result = _service.NaprednaPretraga(null, 1000m, 1300m, StatusTendera.Otvoren,
-                new DateTime(2025, 1, 1), new DateTime(2025, 12, 1), 3);
+                new DateTime(2025, 1, 1));
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual(3, result[0].Id);
@@ -144,7 +144,7 @@ namespace VVS_TenderApp.Tests.Services
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1, t2 });
 
-            var result = _service.NaprednaPretraga(null, null, null, null, null, null, null);
+            var result = _service.NaprednaPretraga(null, null, null, null, null);
 
             Assert.AreEqual(2, result.Count);
         }
@@ -158,7 +158,7 @@ namespace VVS_TenderApp.Tests.Services
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1, t2 });
 
             var result = _service.NaprednaPretraga(null, null, null, null,
-                new DateTime(2025, 1, 1), new DateTime(2025, 2, 1), null);
+                new DateTime(2025, 1, 1));
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual(1, result[0].Id);
@@ -428,7 +428,7 @@ namespace VVS_TenderApp.Tests.Services
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1, t2 });
 
-            var result = _service.NaprednaPretraga("asfalt", null, null, null, null, null, null);
+            var result = _service.NaprednaPretraga("asfalt", null, null, null, null);
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual(1, result[0].Id);
@@ -443,7 +443,7 @@ namespace VVS_TenderApp.Tests.Services
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1, t2 });
 
-            var result = _service.NaprednaPretraga("asfalt", null, null, null, null, null, null);
+            var result = _service.NaprednaPretraga("asfalt", null, null, null, null);
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual(1, result[0].Id);
@@ -457,7 +457,7 @@ namespace VVS_TenderApp.Tests.Services
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
 
-            var result = _service.NaprednaPretraga("nepostojeci", null, null, null, null, null, null);
+            var result = _service.NaprednaPretraga("nepostojeci", null, null, null, null);
 
             Assert.AreEqual(0, result.Count, "Ne bi trebalo naći ništa");
         }
@@ -483,9 +483,7 @@ namespace VVS_TenderApp.Tests.Services
                 1000m,              // ✓ min: 1500 >= 1000
                 2000m,              // ✓ max: 1500 <= 2000
                 StatusTendera.Otvoren, // ✓
-                new DateTime(2025, 6, 1),  // ✓ datum >= 6/1
-                new DateTime(2025, 6, 30), // ✓ datum <= 6/30
-                5);                 // ✓ firmaId
+                new DateTime(2025, 6, 1));  // ✓ datum >= 6/1
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual(1, result[0].Id);
@@ -499,7 +497,7 @@ namespace VVS_TenderApp.Tests.Services
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
 
-            var result = _service.NaprednaPretraga(null, 1000m, null, null, null, null, null);
+            var result = _service.NaprednaPretraga(null, 1000m, null, null, null);
 
             Assert.AreEqual(0, result.Count, "999 < 1000, ne bi trebalo proći");
         }
@@ -512,7 +510,7 @@ namespace VVS_TenderApp.Tests.Services
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
 
-            var result = _service.NaprednaPretraga(null, null, 2000m, null, null, null, null);
+            var result = _service.NaprednaPretraga(null, null, 2000m, null, null);
 
             Assert.AreEqual(0, result.Count, "2001 > 2000, ne bi trebalo proći");
         }
@@ -525,7 +523,7 @@ namespace VVS_TenderApp.Tests.Services
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
 
-            var result = _service.NaprednaPretraga(null, null, null, StatusTendera.Otvoren, null, null, null);
+            var result = _service.NaprednaPretraga(null, null, null, StatusTendera.Otvoren, null);
 
             Assert.AreEqual(0, result.Count);
         }
@@ -539,7 +537,7 @@ namespace VVS_TenderApp.Tests.Services
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
 
             var result = _service.NaprednaPretraga(null, null, null, null,
-                new DateTime(2025, 1, 1), null, null);
+                new DateTime(2025, 1, 1));
 
             Assert.AreEqual(0, result.Count, "31.12.2024 < 1.1.2025");
         }
@@ -553,7 +551,7 @@ namespace VVS_TenderApp.Tests.Services
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
 
             var result = _service.NaprednaPretraga(null, null, null, null,
-                null, new DateTime(2025, 1, 31), null);
+                null);
 
             Assert.AreEqual(0, result.Count, "1.2.2025 > 31.1.2025");
         }
@@ -566,7 +564,7 @@ namespace VVS_TenderApp.Tests.Services
 
             _mockDb.Setup(x => x.DohvatiSveTendere()).Returns(new List<Tender> { t1 });
 
-            var result = _service.NaprednaPretraga(null, null, null, null, null, null, 99);
+            var result = _service.NaprednaPretraga(null, null, null, null, null);
 
             Assert.AreEqual(0, result.Count, "FirmaId 5 != 99");
         }

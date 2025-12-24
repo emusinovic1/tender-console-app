@@ -10,7 +10,7 @@ namespace VVS_TenderApp.Services
     internal interface IPretragaService
     {
         List<Tender> NaprednaPretraga(string kljucnaRijec, decimal? minVrijednost, decimal? maxVrijednost, StatusTendera? status,
-                                     DateTime? datumOd, DateTime? datumDo, int? firmaId);
+                                     DateTime? datumOd);
 
         List<Tender> PretraziPoKljucnojRijeci(string kljucnaRijec);
 

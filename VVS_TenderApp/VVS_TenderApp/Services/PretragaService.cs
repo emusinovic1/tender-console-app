@@ -11,71 +11,145 @@ namespace VVS_TenderApp.Services
     public class PretragaService : IPretragaService
     {
         private readonly DbClass _db;
+        
 
         public PretragaService(DbClass db)
         {
             _db = db;
         }
-        public List<Tender> NaprednaPretraga(string kljucnaRijec, decimal? minVrijednost, decimal? maxVrijednost, StatusTendera? status,
-                                             DateTime? datumOd, DateTime? datumDo,  int? firmaId)
+        private const double BODOVI_PO_POJAVLJIVANJU = 5.0;
+        public List<Tender> NaprednaPretraga(string kljucnaRijec,
+                                             decimal? minVrijednost,
+                                             decimal? maxVrijednost,
+                                             StatusTendera? status,
+                                             DateTime? datumOd)
         {
             var sviTenderi = _db.DohvatiSveTendere();
-            var rezultat = new List<Tender>();
 
-            foreach (var tender in sviTenderi)
+            var tenderiSaScorovima = FiltrirajISkorirajTendere(
+                sviTenderi,
+                kljucnaRijec,
+                minVrijednost,
+                maxVrijednost,
+                status,
+                datumOd
+            );
+
+            return SortirajPoRelevantnosti(tenderiSaScorovima);
+        }
+
+        private List<TenderScore> FiltrirajISkorirajTendere(
+            List<Tender> tenderi,
+            string kljucnaRijec,
+            decimal? minVrijednost,
+            decimal? maxVrijednost,
+            StatusTendera? status,
+            DateTime? datumOd)
+        {
+            return tenderi
+                .Select(tender => new TenderScore
+                {
+                    Tender = tender,
+                    Score = IzracunajRelevantnost(tender, kljucnaRijec)
+                })
+                .Where(ts => ZadovoljavaKriterije(
+                    ts.Tender,
+                    kljucnaRijec,
+                    minVrijednost,
+                    maxVrijednost,
+                    status,
+                    datumOd
+                ))
+                .ToList();
+        }
+
+        private bool ZadovoljavaKriterije(
+            Tender tender,
+            string kljucnaRijec,
+            decimal? minVrijednost,
+            decimal? maxVrijednost,
+            StatusTendera? status,
+            DateTime? datumOd)
+        {
+            return ZadovoljavaKljucnuRijec(tender, kljucnaRijec) &&
+                   ZadovoljavaVrijednost(tender, minVrijednost, maxVrijednost) &&
+                   ZadovoljavaStatus(tender, status) &&
+                   ZadovoljavaDatum(tender, datumOd);
+        }
+
+        private bool ZadovoljavaKljucnuRijec(Tender tender, string kljucnaRijec)
+        {
+            if (string.IsNullOrWhiteSpace(kljucnaRijec))
+                return true;
+
+            return tender.Naziv.ToLower().Contains(kljucnaRijec.ToLower());
+        }
+
+        private bool ZadovoljavaVrijednost(
+            Tender tender,
+            decimal? minVrijednost,
+            decimal? maxVrijednost)
+        {
+            bool zadovoljavaMin = !minVrijednost.HasValue ||
+                                  tender.ProcijenjenaVrijednost >= minVrijednost.Value;
+
+            bool zadovoljavaMax = !maxVrijednost.HasValue ||
+                                  tender.ProcijenjenaVrijednost <= maxVrijednost.Value;
+
+            return zadovoljavaMin && zadovoljavaMax;
+        }
+
+        private bool ZadovoljavaStatus(Tender tender, StatusTendera? status)
+        {
+            return !status.HasValue || tender.Status == status.Value;
+        }
+
+        private bool ZadovoljavaDatum(Tender tender, DateTime? datumOd)
+        {
+            return !datumOd.HasValue || tender.DatumObjave >= datumOd.Value;
+        }
+
+        private double IzracunajRelevantnost(Tender tender, string kljucnaRijec)
+        {
+            if (string.IsNullOrWhiteSpace(kljucnaRijec))
+                return 0.0;
+
+            int brojPojavljivanja = IzbrojiPojavljivanja(
+                tender.Naziv.ToLower(),
+                kljucnaRijec.ToLower()
+            );
+
+            return brojPojavljivanja * BODOVI_PO_POJAVLJIVANJU;
+        }
+
+        private int IzbrojiPojavljivanja(string tekst, string kljucnaRijec)
+        {
+            int count = 0;
+            int index = 0;
+
+            while ((index = tekst.IndexOf(kljucnaRijec, index)) != -1)
             {
-                bool odgovara = true;
-
-                //po kljucnoj rijeci
-                if (!string.IsNullOrWhiteSpace(kljucnaRijec))
-                {
-                    if (!tender.Naziv.ToLower().Contains(kljucnaRijec.ToLower()) &&
-                        !tender.Opis.ToLower().Contains(kljucnaRijec.ToLower()))
-                        odgovara = false;
-                }
-
-                if (minVrijednost.HasValue)
-                {
-                    if (tender.ProcijenjenaVrijednost < minVrijednost.Value) 
-                        odgovara = false;
-                }
-
-                if (maxVrijednost.HasValue)
-                {
-                    if (tender.ProcijenjenaVrijednost > maxVrijednost.Value)
-                        odgovara = false;
-                }
-
-                if (status.HasValue)
-                {
-                    if (tender.Status != status.Value)
-                        odgovara = false;
-                }
-
-                if (datumOd.HasValue)
-                {
-                    if (tender.DatumObjave < datumOd.Value)
-                        odgovara = false;
-                }
-
-                if (datumDo.HasValue)
-                {
-                    if (tender.DatumObjave > datumDo.Value)
-                        odgovara = false;
-                }
-
-                if (firmaId.HasValue)
-                {
-                    if (tender.FirmaId != firmaId.Value)
-                        odgovara = false;
-                }
-
-                if (odgovara)
-                    rezultat.Add(tender);
+                count++;
+                index += kljucnaRijec.Length;
             }
 
-            return rezultat;
+            return count;
         }
+
+        private List<Tender> SortirajPoRelevantnosti(List<TenderScore> tenderiSaScorovima)
+        {
+            return tenderiSaScorovima
+                .OrderByDescending(ts => ts.Score)
+                .Select(ts => ts.Tender)
+                .ToList();
+        }
+
+        private class TenderScore
+        {
+            public Tender Tender { get; set; }
+            public double Score { get; set; }
+        }
+
 
         // Refaktoring
         private readonly struct ScoredTender

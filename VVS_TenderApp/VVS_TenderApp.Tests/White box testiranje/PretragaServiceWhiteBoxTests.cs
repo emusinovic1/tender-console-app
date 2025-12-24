@@ -335,5 +335,343 @@ namespace VVS_TenderApp.Tests.White_box_testiranje
         }
 
         // =====================================================================
+
+        // =====================================================================
+        //                  WHITE - BOX TESTIRANJE: PZ 1
+        // =====================================================================
+
+
+        // =====================================================================
+        //                  Metoda: NaprednaPretraga                                        
+        //                  Radila: Emina Mušinović
+        // =====================================================================
+        
+        private Tender CreateTender(int id, string naziv, decimal vrijednost,
+                                     StatusTendera status, DateTime datum)
+        {
+            return new Tender
+            {
+                Id = id,
+                Naziv = naziv,
+                ProcijenjenaVrijednost = vrijednost,
+                Status = status,
+                DatumObjave = datum
+            };
+        }
+        // TC1: Putanja 1 - Prazna lista tendera (foreach FALSE)
+        [TestMethod]
+        public void TC01_EmptyTenderList_ReturnsEmpty()
+        {
+            // Arrange
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(new List<Tender>());
+
+            // Act
+            var result = _service.NaprednaPretraga(null, null, null, null, null);
+
+            // Assert
+            Assert.AreEqual(0, result.Count);
+        }
+
+        // TC2: Putanja 2 - Bez parametara, svi tenderi prolaze
+        [TestMethod]
+        public void TC02_NoFilters_ReturnsAllTenders()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 1000m, StatusTendera.Otvoren, DateTime.Now),
+                CreateTender(2, "Tender B", 2000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, null, null, null, null);
+
+            // Assert
+            Assert.AreEqual(2, result.Count);
+        }
+
+        // TC3: Putanja 3 - Keyword ne sadrži, odbacuje tender
+        [TestMethod]
+        public void TC03_KeywordNotFound_ExcludesTender()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Nabavka opreme", 5000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga("most", null, null, null, null);
+
+            // Assert
+            Assert.AreEqual(0, result.Count);
+        }
+
+        // TC4: Putanja 4 - Keyword sadrži, while petlja 1 iteracija
+        [TestMethod]
+        public void TC04_KeywordFoundOnce_AddsScore()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Izgradnja mosta", 5000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga("most", null, null, null, null);
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+        }
+
+        // TC5: Putanja 5 - Keyword više puta, while petlja više iteracija
+        [TestMethod]
+        public void TC05_KeywordFoundMultipleTimes_HigherScore()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "most most most", 5000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga("most", null, null, null, null);
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+        }
+
+        // TC6: Putanja 6 - minVrijednost filter odbacuje tender
+        [TestMethod]
+        public void TC06_BelowMinValue_ExcludesTender()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 1000m, StatusTendera.Otvoren, DateTime.Now)
+            };  
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, 5000m, null, null, null);
+
+            // Assert
+            Assert.AreEqual(0, result.Count);
+        }
+
+        // TC7: Putanja 7 - minVrijednost filter prihvata tender
+        [TestMethod]
+        public void TC07_AboveMinValue_IncludesTender()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 5000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, 3000m, null, null, null);
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+        }
+
+        // TC8: Putanja 8 - maxVrijednost filter odbacuje tender
+        [TestMethod]
+        public void TC08_AboveMaxValue_ExcludesTender()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 10000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, null, 5000m, null, null);
+
+            // Assert
+            Assert.AreEqual(0, result.Count);
+        }
+
+        // TC9: Putanja 9 - maxVrijednost filter prihvata tender
+        [TestMethod]
+        public void TC09_BelowMaxValue_IncludesTender()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 3000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, null, 5000m, null, null);
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+        }
+
+        // TC10: Putanja 10 - Status filter odbacuje tender
+        [TestMethod]
+        public void TC10_WrongStatus_ExcludesTender()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 1000m, StatusTendera.Zatvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, null, null, StatusTendera.Otvoren, null);
+
+            // Assert
+            Assert.AreEqual(0, result.Count);
+        }
+
+        // TC11: Putanja 11 - Status filter prihvata tender
+        [TestMethod]
+        public void TC11_CorrectStatus_IncludesTender()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 1000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, null, null, StatusTendera.Otvoren, null);
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+        }
+
+        // TC12: Putanja 12 - Datum filter odbacuje tender
+        [TestMethod]
+        public void TC12_BeforeDate_ExcludesTender()
+        {
+            // Arrange
+            var datum = new DateTime(2023, 1, 1);
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 1000m, StatusTendera.Otvoren, datum)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, null, null, null, new DateTime(2024, 1, 1));
+
+            // Assert
+            Assert.AreEqual(0, result.Count);
+        }
+
+        // TC13: Putanja 13 - Datum filter prihvata tender
+        [TestMethod]
+        public void TC13_AfterDate_IncludesTender()
+        {
+            // Arrange
+            var datum = new DateTime(2024, 6, 1);
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Tender A", 1000m, StatusTendera.Otvoren, datum)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga(null, null, null, null, new DateTime(2024, 1, 1));
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+        }
+
+        // TC14: Putanja 14 - Bubble Sort sa 1 elementom (ne sortira)
+        [TestMethod]
+        public void TC14_BubbleSort_OneElement()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "most", 1000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga("most", null, null, null, null);
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+        }
+
+        // TC15: Putanja 15 - Bubble Sort swap TRUE (vrši zamjenu)
+        [TestMethod]
+        public void TC15_BubbleSort_SwapOccurs()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+    {
+            CreateTender(1, "izgradnja most", 1000m, StatusTendera.Otvoren, DateTime.Now),      //skor 5
+            CreateTender(2, "most most most popravka", 2000m, StatusTendera.Otvoren, DateTime.Now)  // skor 15, 3 put most
+    };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga("most", null, null, null, null);
+
+            // Assert
+            Assert.AreEqual(2, result.Count);
+            //Tender sa većim skorom (id=2, score=15) treba biti prvi
+            Assert.AreEqual(2, result[0].Id);
+            Assert.AreEqual(1, result[1].Id);
+        }
+
+        // TC16: Putanja 16 - Bubble Sort swap FALSE (već sortirano)
+        [TestMethod]
+        public void TC16_BubbleSort_NoSwapNeeded()
+        {
+            // Arrange
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "most most", 1000m, StatusTendera.Otvoren, DateTime.Now),
+                CreateTender(2, "most", 2000m, StatusTendera.Otvoren, DateTime.Now)
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga("most", null, null, null, null);
+
+            // Assert
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(1, result[0].Id); // Redoslijed ostaje isti
+        }
+
+        // TC17: Putanja 17 - Kompleksna kombinacija svih filtera
+        [TestMethod]
+        public void TC17_AllFilters_ComplexPath()
+        {
+            // Arrange
+            var datum = new DateTime(2024, 1, 1);
+            var tenderi = new List<Tender>
+            {
+                CreateTender(1, "Izgradnja mosta", 5000m, StatusTendera.Otvoren, datum),
+                CreateTender(2, "Nabavka most", 3000m, StatusTendera.Zatvoren, datum),
+                CreateTender(3, "Popravka mosta", 7000m, StatusTendera.Otvoren, datum.AddDays(-10))
+            };
+            _mockDb.Setup(d => d.DohvatiSveTendere()).Returns(tenderi);
+
+            // Act
+            var result = _service.NaprednaPretraga("most", 4000m, 8000m,
+                                                    StatusTendera.Otvoren, datum.AddDays(-5));
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual(1, result[0].Id);
+        }
     }
 }
