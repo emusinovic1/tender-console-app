@@ -16,65 +16,96 @@ namespace VVS_TenderApp.Services
         {
             _db = db;
         }
-        public List<Tender> NaprednaPretraga(string kljucnaRijec, decimal? minVrijednost, decimal? maxVrijednost, StatusTendera? status,
-                                             DateTime? datumOd, DateTime? datumDo,  int? firmaId)
+        public List<Tender> NaprednaPretraga(string kljucnaRijec, decimal? minVrijednost,decimal? maxVrijednost, 
+                                            StatusTendera? status, DateTime? datumOd)
         {
             var sviTenderi = _db.DohvatiSveTendere();
-            var rezultat = new List<Tender>();
+            var rezultati = new List<Tender>();
+            var scorovi = new List<double>();
 
             foreach (var tender in sviTenderi)
             {
                 bool odgovara = true;
+                double relevanceScore = 0.0;
 
-                //po kljucnoj rijeci
+                // 1. SCORING PO KLJUČNOJ RIJEČI
                 if (!string.IsNullOrWhiteSpace(kljucnaRijec))
                 {
-                    if (!tender.Naziv.ToLower().Contains(kljucnaRijec.ToLower()) &&
-                        !tender.Opis.ToLower().Contains(kljucnaRijec.ToLower()))
+                    string nazivLower = tender.Naziv.ToLower();
+                    string kljucnaLower = kljucnaRijec.ToLower();
+
+                    if (!nazivLower.Contains(kljucnaLower))
+                    {
                         odgovara = false;
+                    }
+                    else
+                    {
+                        // Brojanje pojavljivanja
+                        int count = 0;
+                        int index = 0;
+                        while ((index = nazivLower.IndexOf(kljucnaLower, index)) != -1)
+                        {
+                            count++;
+                            index += kljucnaLower.Length;
+                        }
+                        relevanceScore += count * 5.0;
+                    }
                 }
 
-                if (minVrijednost.HasValue)
+                // 2. FILTRIRANJE PO MIN VRIJEDNOSTI
+                if (minVrijednost.HasValue) 
                 {
-                    if (tender.ProcijenjenaVrijednost < minVrijednost.Value) 
+                    if (tender.ProcijenjenaVrijednost < minVrijednost.Value)  
                         odgovara = false;
                 }
 
-                if (maxVrijednost.HasValue)
+                // 3. FILTRIRANJE PO MAX VRIJEDNOSTI
+                if (maxVrijednost.HasValue)  
                 {
                     if (tender.ProcijenjenaVrijednost > maxVrijednost.Value)
                         odgovara = false;
                 }
 
-                if (status.HasValue)
+                // 4. FILTRIRANJE PO STATUSU
+                if (status.HasValue)  
                 {
-                    if (tender.Status != status.Value)
+                    if (tender.Status != status.Value)  
                         odgovara = false;
                 }
 
-                if (datumOd.HasValue)
+                // 5. FILTRIRANJE PO DATUMU
+                if (datumOd.HasValue)  
                 {
-                    if (tender.DatumObjave < datumOd.Value)
+                    if (tender.DatumObjave < datumOd.Value) 
                         odgovara = false;
                 }
 
-                if (datumDo.HasValue)
+                if (odgovara) 
                 {
-                    if (tender.DatumObjave > datumDo.Value)
-                        odgovara = false;
+                    rezultati.Add(tender);
+                    scorovi.Add(relevanceScore);
                 }
-
-                if (firmaId.HasValue)
-                {
-                    if (tender.FirmaId != firmaId.Value)
-                        odgovara = false;
-                }
-
-                if (odgovara)
-                    rezultat.Add(tender);
             }
 
-            return rezultat;
+            // 6. BUBBLE SORT
+            for (int i = 0; i < rezultati.Count - 1; i++)  
+            {
+                for (int j = 0; j < rezultati.Count - i - 1; j++)  
+                {
+                    if (scorovi[j] < scorovi[j + 1])  
+                    {
+                        double tempScore = scorovi[j];
+                        scorovi[j] = scorovi[j + 1];
+                        scorovi[j + 1] = tempScore;
+
+                        var tempTender = rezultati[j];
+                        rezultati[j] = rezultati[j + 1];
+                        rezultati[j + 1] = tempTender;
+                    }
+                }
+            }
+
+            return rezultati;
         }
 
         // Refaktoring
