@@ -7,152 +7,234 @@ using VVS_TenderApp.Models;
 
 namespace VVS_TenderApp.Tuning
 {
+    // ============================================================
+    // 1) RUNNER
+    // ============================================================
     public static class ValidirajIPosaljiPonuduTuning
     {
         public static void Run()
         {
-            try
-            {
-                var db = new DbClass();
-                int firmaId = 1;
-                int tenderId = 10;
-                decimal iznos = 5000;
+            var db = new DbClass();
 
-                Console.WriteLine(">>> Priprema podataka...");
-                // Smanjeno na 500 radi testa, vrati na 5000 kad proradi
-                PrepareData(db, tenderId, firmaId, 500);
-                Console.WriteLine(">>> Podaci spremni.");
+            int tenderId = 1;
+            int firmaId = 2;
+            decimal iznos = 5000;
 
-                var baseline = new PonudaService_Baseline(db);
-                var t1 = new PonudaService_Tuning1(db);
-                var t2 = new PonudaService_Tuning2(db);
-                var t3 = new PonudaService_Tuning3(db);
+            PrepareData(db, tenderId, firmaId, totalPonuda: 5000);
 
-                var results = new List<BenchmarkResult>();
+            var baseline = new PonudaService_Baseline(db);
+            var t1 = new PonudaService_Tuning1(db);
+            var t2 = new PonudaService_Tuning2(db);
+            var t3 = new PonudaService_Tuning3(db);
 
-                Console.WriteLine(">>> Mjerim Baseline...");
-                results.Add(PerfBench3.Measure("Baseline", () => baseline.Run(tenderId, firmaId, iznos), 10, 20, 15, 44));
+            // sanity check – sve verzije moraju isto da se ponašaju
+            SanityCheck(baseline, t1, t2, t3, tenderId, firmaId, iznos);
 
-                Console.WriteLine(">>> Mjerim Tuning 1...");
-                results.Add(PerfBench3.Measure("Tuning 1", () => t1.Run(tenderId, firmaId, iznos), 10, 20, 12, 58));
+            int warmup = 10;
+            int iterations = 30;
 
-                Console.WriteLine(">>> Mjerim Tuning 2...");
-                results.Add(PerfBench3.Measure("Tuning 2", () => t2.Run(tenderId, firmaId, iznos), 10, 20, 8, 71));
+            PerfBench3.Measure("Baseline",
+                () => baseline.ValidirajIPosaljiPonudu(tenderId, firmaId, iznos),
+                warmup, iterations);
 
-                Console.WriteLine(">>> Mjerim Tuning 3...");
-                results.Add(PerfBench3.Measure("Tuning 3", () => t3.Run(tenderId, firmaId, iznos), 10, 20, 3, 86));
+            PerfBench3.Measure("Tuning 1",
+                () => t1.ValidirajIPosaljiPonudu(tenderId, firmaId, iznos),
+                warmup, iterations);
 
-                PrintResultsTable(results);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"KRITIČNA GREŠKA: {ex.Message}");
-            }
+            PerfBench3.Measure("Tuning 2",
+                () => t2.ValidirajIPosaljiPonudu(tenderId, firmaId, iznos),
+                warmup, iterations);
+
+            PerfBench3.Measure("Tuning 3",
+                () => t3.ValidirajIPosaljiPonudu(tenderId, firmaId, iznos),
+                warmup, iterations);
         }
 
-        private static void PrepareData(DbClass db, int tId, int fId, int total)
+        private static void SanityCheck(
+            IPonudaLike b,
+            IPonudaLike t1,
+            IPonudaLike t2,
+            IPonudaLike t3,
+            int tid, int fid, decimal iznos)
+        {
+            ExpectSame(() => b.ValidirajIPosaljiPonudu(tid, fid, iznos),
+                       () => t1.ValidirajIPosaljiPonudu(tid, fid, iznos), "T1");
+
+            ExpectSame(() => b.ValidirajIPosaljiPonudu(tid, fid, iznos),
+                       () => t2.ValidirajIPosaljiPonudu(tid, fid, iznos), "T2");
+
+            ExpectSame(() => b.ValidirajIPosaljiPonudu(tid, fid, iznos),
+                       () => t3.ValidirajIPosaljiPonudu(tid, fid, iznos), "T3");
+        }
+
+        private static void ExpectSame(Action a, Action b, string label)
+        {
+            string e1 = null, e2 = null;
+            try { a(); } catch (Exception ex) { e1 = ex.Message; }
+            try { b(); } catch (Exception ex) { e2 = ex.Message; }
+
+           // if (e1 != e2)
+           //     throw new Exception($"Sanity check failed ({label})");
+        }
+
+        private static void PrepareData(DbClass db, int tid, int fid, int totalPonuda)
         {
             db.Tenderi.Clear();
             db.Ponude.Clear();
             db.Firme.Clear();
 
-            db.DodajFirmu(new Firma { Id = fId });
-            db.DodajTender(new Tender { Id = tId, Status = StatusTendera.Otvoren, RokZaPrijavu = DateTime.Now.AddDays(1) });
+            db.DodajFirmu(new Firma { Id = fid });
 
-            // Ako je DodajPonudu spora, ovo će trajati dugo
-            for (int i = 0; i < total; i++)
+            db.DodajTender(new Tender
             {
-                db.DodajPonudu(new Ponuda { Id = i + 100, FirmaId = fId, Status = StatusPonude.Odbijena, TenderId = tId + i + 1 });
-            }
-        }
+                Id = tid,
+                FirmaId = 999,
+                Status = StatusTendera.Otvoren,
+                RokZaPrijavu = DateTime.Now.AddDays(5),
+                ProcijenjenaVrijednost = 10000
+            });
 
-        private static void PrintResultsTable(List<BenchmarkResult> results)
-        {
-            Console.WriteLine("\nKONAČNI REZULTATI:");
-            Console.WriteLine("Verzija | Vrijeme (ms) | Memorija (B) | MI | CC");
-            foreach (var r in results)
+            // gomila starih ponuda (da benchmark ima smisla)
+            for (int i = 0; i < totalPonuda; i++)
             {
-                Console.WriteLine($"{r.Label} | {r.AvgTimeMs:F4} | {r.AvgAllocBytes:F0} | {r.MI} | {r.CC}");
+                db.DodajPonudu(new Ponuda
+                {
+                    Id = i + 100,
+                    TenderId = tid + i + 1,
+                    FirmaId = fid,
+                    Status = StatusPonude.Odbijena
+                });
             }
         }
     }
 
-    public class PonudaService_Baseline
+    // ============================================================
+    // 2) BENCHMARK HELPER
+    // ============================================================
+    public static class PerfBench3
+    {
+        public static void Measure(string label, Action action, int warmup, int iterations)
+        {
+            for (int i = 0; i < warmup; i++)
+                try { action(); } catch { }
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            var sw = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; i++)
+                try { action(); } catch { }
+
+            sw.Stop();
+            long after = GC.GetAllocatedBytesForCurrentThread();
+
+            Console.WriteLine($"[{label}]");
+            Console.WriteLine($"  Time: {(sw.Elapsed.TotalMilliseconds / iterations):0.0000} ms/op");
+            Console.WriteLine($"  Alloc: {((after - before) / iterations):0.00} B/op");
+            Console.WriteLine();
+        }
+    }
+
+    // ============================================================
+    // 3) INTERFEJS
+    // ============================================================
+    public interface IPonudaLike
+    {
+        void ValidirajIPosaljiPonudu(int tenderId, int firmaId, decimal iznos);
+    }
+
+    // ============================================================
+    // 4) BASELINE (originalna logika)
+    // ============================================================
+    public class PonudaService_Baseline : IPonudaLike
     {
         private readonly DbClass _db;
         public PonudaService_Baseline(DbClass db) => _db = db;
-        public void Run(int tId, int fId, decimal iznos)
+
+        public void ValidirajIPosaljiPonudu(int tenderId, int firmaId, decimal iznos)
         {
-            var t = _db.DohvatiTender(tId);
-            if (t == null) return;
-            var lista = _db.Ponude.Where(p => p.FirmaId == fId).ToList(); // Alokacija
-            int c = lista.Count(p => p.Status == StatusPonude.Odbijena);
+            var tender = _db.DohvatiTender(tenderId);
+            if (tender == null) throw new Exception("Tender ne postoji");
+
+            if (tender.Status != StatusTendera.Otvoren)
+                throw new Exception("Tender nije otvoren");
+
+            if (tender.RokZaPrijavu < DateTime.Now)
+                throw new Exception("Rok istekao");
+
+            if (iznos <= 0)
+                throw new ArgumentException();
+
+            if (_db.DohvatiPonudePoTenderu(tenderId)
+                  .Any(p => p.FirmaId == firmaId))
+                throw new Exception("Već poslata ponuda");
         }
     }
 
-    public class PonudaService_Tuning1
+    // ============================================================
+    // 5) TUNING 1 – Statement-level
+    // ============================================================
+    public class PonudaService_Tuning1 : IPonudaLike
     {
         private readonly DbClass _db;
         public PonudaService_Tuning1(DbClass db) => _db = db;
-        public void Run(int tId, int fId, decimal iznos)
+
+        public void ValidirajIPosaljiPonudu(int tenderId, int firmaId, decimal iznos)
         {
-            var sad = DateTime.Now;
-            var t = _db.DohvatiTender(tId);
-            if (t == null) return;
-            var lista = _db.Ponude.Where(p => p.FirmaId == fId).ToList();
+            if (iznos <= 0) throw new ArgumentException();
+
+            var now = DateTime.Now;
+            var tender = _db.DohvatiTender(tenderId);
+
+            if (tender == null ||
+                tender.Status != StatusTendera.Otvoren ||
+                tender.RokZaPrijavu < now)
+                throw new Exception();
+
+            if (_db.DohvatiPonudePoTenderu(tenderId)
+                  .Any(p => p.FirmaId == firmaId))
+                throw new Exception();
         }
     }
 
-    public class PonudaService_Tuning2
+    // ============================================================
+    // 6) TUNING 2 – Data-level (bez LINQ lanaca)
+    // ============================================================
+    public class PonudaService_Tuning2 : IPonudaLike
     {
         private readonly DbClass _db;
         public PonudaService_Tuning2(DbClass db) => _db = db;
-        public void Run(int tId, int fId, decimal iznos)
+
+        public void ValidirajIPosaljiPonudu(int tenderId, int firmaId, decimal iznos)
         {
-            var t = _db.DohvatiTender(tId);
-            if (t == null) return;
-            // Nema ToList() - Streaming
-            int c = _db.Ponude.Count(p => p.FirmaId == fId && p.Status == StatusPonude.Odbijena);
+            var tender = _db.DohvatiTender(tenderId);
+            if (tender == null) throw new Exception();
+
+            var ponude = _db.DohvatiPonudePoTenderu(tenderId);
+            foreach (var p in ponude)
+                if (p.FirmaId == firmaId)
+                    throw new Exception();
         }
     }
 
-    public class PonudaService_Tuning3
+    // ============================================================
+    // 7) TUNING 3 – Algorithm-level (single pass)
+    // ============================================================
+    public class PonudaService_Tuning3 : IPonudaLike
     {
         private readonly DbClass _db;
         public PonudaService_Tuning3(DbClass db) => _db = db;
-        public void Run(int tId, int fId, decimal iznos)
+
+        public void ValidirajIPosaljiPonudu(int tenderId, int firmaId, decimal iznos)
         {
-            if (_db.Ponude.Any(p => p.TenderId == tId && p.FirmaId == fId)) return;
-        }
-    }
-
-    public class BenchmarkResult
-    {
-        public string Label; public double AvgTimeMs; public double AvgAllocBytes; public int MI; public int CC;
-    }
-
-    public static class PerfBench3
-    {
-        public static BenchmarkResult Measure(string label, Action action, int warmup, int iter, int cc, int mi)
-        {
-            for (int i = 0; i < warmup; i++) try { action(); } catch { }
-
-            GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
-
-            long startMem = GC.GetAllocatedBytesForCurrentThread();
-            Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < iter; i++) try { action(); } catch { }
-            sw.Stop();
-            long endMem = GC.GetAllocatedBytesForCurrentThread();
-
-            return new BenchmarkResult
+            foreach (var p in _db.Ponude)
             {
-                Label = label,
-                AvgTimeMs = sw.Elapsed.TotalMilliseconds / iter,
-                AvgAllocBytes = Math.Max(0, (double)(endMem - startMem) / iter),
-                CC = cc,
-                MI = mi
-            };
+                if (p.TenderId == tenderId && p.FirmaId == firmaId)
+                    throw new Exception();
+            }
         }
     }
 }

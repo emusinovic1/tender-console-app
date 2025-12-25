@@ -20,7 +20,7 @@ namespace VVS_TenderApp
 
 
         static Korisnik ulogovanKorisnik = null;
-
+        /*
           static void Main(string[] args)
             {
                 Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -53,10 +53,16 @@ namespace VVS_TenderApp
                         Console.ReadKey();
                     }
                 }
-            }
-       
+            }*/
+        static void Main(string[] args)
+        {
+            ValidirajIPosaljiPonuduTuning.Run();
 
- 
+            Console.WriteLine("Pritisni bilo koju tipku...");
+            Console.ReadKey();
+        }
+
+
 
 
         static void PocetniMeni()
