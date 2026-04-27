@@ -323,7 +323,7 @@ namespace VVS_TenderApp.Tuning
         }
     }
 
-    // --- TEHNIKA 2 EARY EXIT, KORIŠTENJE CONTINUE UMJESTO PROVJERA
+    // --- TEHNIKA 2 EARLY EXIT, KORIŠTENJE CONTINUE UMJESTO PROVJERA
     public class PretragaService1_Tuning2 : IPretragaTuning {
         private readonly DbClass _db;
         public PretragaService1_Tuning2(DbClass db) => _db = db;
@@ -391,6 +391,7 @@ namespace VVS_TenderApp.Tuning
         }
 
     }
+    // Eliminacija redudantnih struktura
     public class PretragaService1_Tuning3 : IPretragaTuning {
         private readonly DbClass _db;
         public PretragaService1_Tuning3(DbClass db) => _db = db;
@@ -406,7 +407,6 @@ namespace VVS_TenderApp.Tuning
                 bool odgovara = true;
                 double relevanceScore = 0.0;
 
-                // 1. KLJUČNA RIJEČ
                 if (!string.IsNullOrWhiteSpace(kljucnaRijec))
                 {
                     string nazivLower = tender.Naziv.ToLower();
@@ -429,28 +429,24 @@ namespace VVS_TenderApp.Tuning
                     }
                 }
 
-                // 2. MIN VRIJEDNOST
                 if (minVrijednost.HasValue)
                 {
                     if (tender.ProcijenjenaVrijednost < minVrijednost.Value)
                         odgovara = false;
                 }
 
-                // 3. MAX VRIJEDNOST
                 if (maxVrijednost.HasValue)
                 {
                     if (tender.ProcijenjenaVrijednost > maxVrijednost.Value)
                         odgovara = false;
                 }
 
-                // 4. STATUS
                 if (status.HasValue)
                 {
                     if (tender.Status != status.Value)
                         odgovara = false;
                 }
 
-                // 5. DATUM
                 if (datumOd.HasValue)
                 {
                     if (tender.DatumObjave < datumOd.Value)
@@ -459,7 +455,7 @@ namespace VVS_TenderApp.Tuning
 
                 if (odgovara)
                 {
-                    // 🔽 JEDINA BITNA PROMJENA
+                    // PROMJENA
                     rezultati.Add((tender, relevanceScore));
                 }
             }
