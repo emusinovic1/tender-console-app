@@ -349,5 +349,16 @@ namespace VVS_TenderApp.Data
             }
                 
         }
+        public virtual int PrebrojiOdbijenePonude(int firmaId)
+        {
+            // Simulacija: Umjesto povlačenja 5000 objekata, baza vraća samo jedan broj
+            return DohvatiPonudePoFirmi(firmaId).Count(p => p.Status == StatusPonude.Odbijena);
+        }
+
+        public virtual bool PostojiLiVecPonuda(int tenderId, int firmaId)
+        {
+            // Simulacija: Baza provjerava postojanje bez alokacije liste
+            return DohvatiPonudePoTenderu(tenderId).Any(p => p.FirmaId == firmaId);
+        }
     }
 }

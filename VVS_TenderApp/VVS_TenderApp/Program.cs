@@ -20,40 +20,49 @@ namespace VVS_TenderApp
 
 
         static Korisnik ulogovanKorisnik = null;
+        /*
+          static void Main(string[] args)
+            {
+                Console.OutputEncoding = System.Text.Encoding.UTF8;
 
+                Console.WriteLine("--SISTEM ZA UPRAVLJANJE TENDERIMA--");
+                Console.WriteLine();
+                Console.WriteLine("Pritisnite bilo koji taster za nastavak...");
+                Console.ReadKey();
+
+                while (true)
+                {
+                    try
+                    {
+                        if (ulogovanKorisnik == null)
+                        {
+                            PocetniMeni();
+                        }
+                        else
+                        {
+                            if (ulogovanKorisnik.Uloga == Uloga.Admin)
+                                AdministratorMeni();
+                            else
+                                FirmaMeni();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"\nNeočekivana greška: {ex.Message}");
+                        Console.WriteLine("Pritisnite bilo koji taster za nastavak...");
+                        Console.ReadKey();
+                    }
+                }
+            }*/
         static void Main(string[] args)
         {
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            ValidirajIPosaljiPonuduTuning.Run();
 
-            Console.WriteLine("--SISTEM ZA UPRAVLJANJE TENDERIMA--");
-            Console.WriteLine();
-            Console.WriteLine("Pritisnite bilo koji taster za nastavak...");
+            Console.WriteLine("Pritisni bilo koju tipku...");
             Console.ReadKey();
-
-            while (true)
-            {
-                try
-                {
-                    if (ulogovanKorisnik == null)
-                    {
-                        PocetniMeni();
-                    }
-                    else
-                    {
-                        if (ulogovanKorisnik.Uloga == Uloga.Admin)
-                            AdministratorMeni();
-                        else
-                            FirmaMeni();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"\nNeočekivana greška: {ex.Message}");
-                    Console.WriteLine("Pritisnite bilo koji taster za nastavak...");
-                    Console.ReadKey();
-                }
-            }
         }
+
+
 
 
         static void PocetniMeni()
@@ -807,6 +816,7 @@ namespace VVS_TenderApp
                 }
                 // dodano samo radi uvida u alociranu memoriju i brzinu
                 RangirajPonudeTuning.Run();
+                ValidirajIPosaljiPonuduTuning.Run();
                 Console.WriteLine("\nPritisnite bilo koji taster...");
                 Console.ReadKey();
             }
